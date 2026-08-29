@@ -1,0 +1,15 @@
+{
+    "metrics": {
+        "intensity": "N/A (Single Image)",
+        "metrics": {
+            "registration_trust": "100%",
+            "spatial_snr": "N/A",
+            "system_total_trust": "100%"
+        },
+        "verdict": "Single Scene Contextual Analysis"
+    },
+    "ai_response": {
+        "text_response": "The satellite image depicts a densely populated urban area with various urban features. The dominant land cover includes buildings, roads, and infrastructure. There are several buildings of different sizes and shapes, indicating a mix of residential and commercial areas. The roads are well-maintained, and there are several bridges and intersections visible. The image also shows green spaces and parks, indicating the presence of public green areas. The overall urbanisation level appears high, with a dense concentration of buildings and infrastructure.",
+        "confidence": 0.85
+    }
+}

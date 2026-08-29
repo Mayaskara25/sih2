@@ -1,0 +1,34 @@
+# --- data: never committed; data/manifests/ IS committed (reproducibility, PLAN.md §5.7)
+data/*
+!data/manifests/
+!data/manifests/**
+!data/bignet.txt
+
+# --- run outputs & model artifacts
+runs/
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# --- python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- HF / torch caches if ever placed in-tree
+.cache/
+hf_home/
+
+# --- os / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

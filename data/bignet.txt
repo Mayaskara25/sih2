@@ -1,0 +1,105 @@
+How to use
+
+We show the recommended way to prepare the image and text data to be jointly used in the form of a custom PyTorch Dataset BENTxTDataset or DataLoader BENTxTDataModule provided in ben_txt_datamodule.py.
+1. Download BigEarthNet.txt.parquet
+
+Download using Git.
+
+git clone https://huggingface.co/datasets/BIFOLD-BigEarthNetv2-0/BigEarthNet.txt
+
+2. Download the Image Data
+
+Download the Sentinel-1 and Sentinel-2 image data from the BigEarthNet v2.0 website.
+3. Preprocess the Image Data
+
+Convert the Sentinel-1 and Sentinel-2 image data to safetensors stored in an LMDB database for higher throughput using rico-hdl. Follow the installation instructions on GitHub, then execute the following command to convert the Sentinel-1 and Sentinel-2 image data downloaded to <S1_ROOT_DIR> and <S2_ROOT_DIR>.
+
+rico-hdl bigearthnet --bigearthnet-s1-dir <S1_ROOT_DIR> --bigearthnet-s2-dir <S2_ROOT_DIR> --target-dir Encoded-BigEarthNet
+
+4. Load the Data
+
+Install uv. Install the required packages via uv using the command below. You can specify if you want to use the PyTorch CPU version or PyTorch with CUDA 12.6 by choosing cpu or cu126 as the <option>.
+
+uv sync --extra <option>
+
+The following examples show how to jointly load text samples from BigEarthNet.txt with the respective image data from BigEarthNet v2.0. After executing the suggested steps above, you should be able to run the following file from this repository:
+
+uv run example_data_loading.py
+
+or load the data manually using the provided datamodule as shown in the following two examples:
+
+This example shows how to load the Red (B04), Green (B03), and Blue (B02) band from the Sentinel-2 image data using the BENTxTDataset Datasets class. More details about the custom Dataset are provided in ben_txt_datamodule.py.
+
+from ben_txt_datamodule import BENTxTDataset
+
+ds_rgb = BENTxTDataset(
+  lmdb_file = "Encoded-BigEarthNet/",
+  metadata_file = "BigEarthNet.txt.parquet",
+  bands = ("B04", "B03", "B02"),
+  img_size = 120
+)
+
+sample = ds_rgb[0]
+print(f"RGB input image: {sample['image_input'].shape}")
+print(f"Text input: {sample['text_input']}")
+print(f"Reference output: {sample['reference_output']}")
+
+This example shows how to load the 10m and 20m spatial resolution bands from Sentinel-1 and Sentinel-2 using the BENTxTDataModule Lightning DataModule class. In this example we apply multiple metadata filters on BigEarthNet.txt, more details about the custom DataModule are provided in ben_txt_datamodule.py.
+
+from ben_txt_datamodule import BENTxTDataModule
+
+# Lightning DataModule example using the 10m and 20m spatial resolution bands from Sentinel-1 and Sentinel-2 and multiple metadata filters.
+# The datamodule will create 4 dataloaders: train, val, test, and bench.
+dm = BENTxTDataModule(
+  image_lmdb_file = "Encoded-BigEarthNet/",
+  metadata_file = "BigEarthNet.txt.parquet",
+  bands = 'S1S2-10m20m',
+  img_size = 120,
+  batch_size = 1,
+  num_workers_dataloader = 0,
+  types = ['mcq'],
+  categories = ['climate zone'],
+  countries = ['Portugal', 'Finland'],
+  seasons = ['Summer'],
+  climate_zones = None,
+  point_token = ['<point>', '</point>'],
+  ref_token = ['<ref>', '</ref>']
+)
+dm.setup()
+
+train_dl = dm.train_dataloader()
+for batch in train_dl:
+  print(f"Batch image input shape: {batch['image_input'].shape}")
+  print(f"First batch sample text input: {batch['text_input'][0]}")
+  print(f"First batch sample text reference output: {batch['reference_output']}")
+  break
+
+Citation
+
+If you use the BigEarthNet.txt dataset, please cite:
+
+J. Herzog, M. Adler, L. Hackel, Y. Shu, A. Zavras, I. Papoutsis, P. Rota, B. Demir,
+"BigEarthNet.txt: A Large-Scale Multi-Sensor Image-Text Dataset and Benchmark for Earth Observation",
+Arxiv Preprint arXiv:2603.29630, 2026.
+
+@article{Herzog2026BigEarthNetTXT,
+  title={BigEarthNet.txt: A Large-Scale Multi-Sensor Image-Text Dataset and Benchmark for Earth Observation},
+  author={Johann-Ludwig Herzog and Mathis Jürgen Adler and Leonard Hackel and Yan Shu and Angelos Zavras and Ioannis Papoutsis and Paolo Rota and Begüm Demir},
+  journal={Arxiv Preprint arXiv:2603.29630},
+  year={2026},
+}
+
+Downloads last month
+    1,455
+
+Number of rows:
+9,553,962
+Total file size:
+467 MB
+Space using BIFOLD-BigEarthNetv2-0/BigEarthNet.txt 1
+🛰️
+maanas1234321/satquery-ai
+Paper for BIFOLD-BigEarthNetv2-0/BigEarthNet.txt
+BigEarthNet.txt: A Large-Scale Multi-Sensor Image-Text Dataset and Benchmark for Earth Observation
+Paper • 2603.29630 • Published Mar 31 •
+1
