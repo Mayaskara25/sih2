@@ -43,7 +43,7 @@ Every work order's acceptance test in §7 maps back to one or more of these. §9
 - **Cloud:** Colab / Kaggle free tier (T4 16 GB / P100 16 GB), session time limits. All training happens here. Every training run must fit one session and checkpoint to Drive / a Kaggle Dataset so a disconnect costs minutes, not hours.
 - System Python is **3.14.7** — too new for the torch/transformers stack. W0 pins **Python 3.11** in a `uv` venv. No agent picks its own interpreter.
 
-### 2.2 BigEarthNet — the acquisition problem (this is the #1 schedule risk)
+### 2.2 BigEarthNet — the acquisition problem (**SOLVED — see §2.2b**)
 
 `BigEarthNet.txt` is **text only**. Confirmed layout:
 
@@ -57,13 +57,41 @@ Every work order's acceptance test in §7 maps back to one or more of these. §9
 
 The image archives are **monolithic `.tar.zst`, not sharded**. There is no per-patch HTTP access and no HuggingFace image mirror. v1 of this plan collapsed all of this into one checkbox ("BigEarthNet.txt slice downloaded + parsed"); that checkbox is a trap and W1 exists to defuse it.
 
-**Consequence:** you cannot "download a slice." You can only *stream* the archive and keep what you want. See W1 for the three-tier strategy and its abort trigger.
+**Consequence:** you cannot "download a slice." You can only *stream* the archive and keep what you want.
 
-**This is a bandwidth-and-wall-clock problem, not a disk problem.** The stream (`curl … | zstd -dc | tar -x --wildcards`) never materialises the archive anywhere — it pipes through and writes only the matched members, on Colab. See §2.2a for the disk budget that actually binds.
+### 2.2b SOLVED — measured 2026-08-29, supersedes the three-tier guesswork
 
-**Note the PS wording:** "fine-tuned or otherwise adapted using BigEarthNet.txt **or any open source training data**." The fallback tier in W1 is explicitly permitted by the problem statement. Use it without guilt if the trigger fires.
+The archives were probed directly rather than reasoned about. Findings, all empirical:
 
-### 2.2a Disk budget — **20 GB free on `/home` (verified 2026-08-29). This is a real constraint.**
+**Internal layout** (confirmed by streaming the first 8 MB and listing tar members):
+```
+BigEarthNet-S2/<acquisition_folder>/<patch_name>/<patch_name>_B01.tif …_B12.tif   (12 bands)
+BigEarthNet-S1/<acquisition_folder>/<patch_name>/<patch_name>_VV.tif, _VH.tif     (2 bands)
+```
+One S2 patch ≈ **165 KB** on disk (4×29 KB @10 m, 6×7.5 KB @20 m, 2×1.2 KB @60 m); one S1 patch ≈ **116 KB**.
+
+**`metadata.parquet` (3.5 MB) is the join key.** Columns: `patch_id` (= the S2 patch name), `s1_name`, `labels`, **`split`** (official train/validation/test — 237,871 / 122,342 / 119,825 over 480,038 rows), `country`, snow/cloud flags. Use the official split; do not invent one.
+
+**Range requests are NOT supported** — Zenodo returns `200` with full content-length for a `Range` header, so **there is no resume**. A stream that dies restarts from zero. This is why the bounded-prefix strategy below matters: it needs minutes, not hours, so a failed stream costs little.
+
+**The pairing trap is real and confirmed.** S1 and S2 order their archives by *different* acquisition folders — S2 starts at `S2A_…20170613T101031_…T33UUP`, S1 at `S1A_…20170613T165043`, and the S1 partner of the first S2 patch lives in a *different* S1 folder (`S1B_…20170612T165809`). **Naively early-stopping both archives yields unpaired patches.** Both archives are ordered alphabetically by acquisition folder, so paired yield must be computed, not assumed:
+
+| Read first *k* folders of **each** archive | Paired patches | Stream cost | Countries | Land-cover classes |
+|---|---|---|---|---|
+| 1 | 1,564 | ~0.6 GB | 1 | — |
+| 5 | 7,010 | ~5.1 GB | 2 (IE, AT) | 17 / 19 |
+| **10** | **13,630** | **~8.6 GB** | **4 (IE, PT, FI, AT)** | **19 / 19** ✅ |
+| 20 | 19,646 | ~15.9 GB | — | 19 / 19 |
+
+**DECISION: stream the first 10 acquisition folders of each archive.** 13,630 paired S1+S2 patches for ~8.6 GB of streaming and **~3.8 GB stored**. k=10 is the smallest prefix containing **all 19 land-cover classes** — k=5 misses two, which would leave a contrastive encoder blind to them. Subsample to ~5,000 pairs after extraction if disk gets tight; extract once, keep forever.
+
+**Known limitation, must be disclosed in the writeup (§5.9):** the slice is 4 European countries, not a global sample. It is a prefix of the archive, not a stratified draw, because the archive format makes a stratified draw cost 118 GB. This is a defensible engineering trade-off — say so plainly rather than implying the sample is representative.
+
+**Net effect: BigEarthNet is no longer the project's #1 schedule risk.** It is a ~10-minute stream, and it can run locally; Colab is not required for acquisition (still required for training).
+
+**Note the PS wording:** "fine-tuned or otherwise adapted using BigEarthNet.txt **or any open source training data**," so substituting an open corpus is permitted if ever needed. Given §2.2b it should not be needed for BigEarthNet — but it is the sanctioned move for RSVQA-HR, whose test images cannot be separated from its 13.5 GB train archive.
+
+### 2.2a Disk budget — **33 GB free on `/home` (re-measured 2026-08-29 after the user freed space).**
 
 The 118 GB of BigEarthNet archives **never touch the local disk**, and neither does the extracted slice. Split every dataset into one of three tiers and respect the tier:
 
@@ -77,7 +105,7 @@ The 118 GB of BigEarthNet archives **never touch the local disk**, and neither d
 | **Local** | Bhoonidhi Cartosat + RISAT samples (5–10 scenes) | `data/bhoonidhi/` | ~3 GB |
 | **Local** | `runs/` traces, masks, overlays | `runs/` | ~1 GB |
 
-**Measured after W0's `uv sync`: 18 GB free, `.venv` = 5.6 GB.** Remaining local demand is ~13–14 GB (models + eval data + Bhoonidhi + runs) against 18 GB free — roughly **4 GB of slack**. It fits, with no room for a second copy of anything, and no room at all for a train split.
+**Measured 2026-08-29 after the user freed space: 33 GB free, `.venv` = 5.6 GB.** Remaining local demand is ~13–14 GB (models + eval data + Bhoonidhi + runs), leaving roughly **19 GB of slack**. Comfortable — but the tiering rules below still bind, because the thing they prevent (pulling a train split or a BEN archive locally) is measured in tens of GB and would eat that slack in one command. The `verify.py` disk floor stays at 5 GB.
 
 Also verified on this environment (W0): Python 3.11.15, torch 2.13.0+cu130, CUDA available, GTX 1650 reporting **3.9 GB usable VRAM**. Note `transformers` resolved to **5.16.x** — a major version, so the Grounding DINO `box_threshold` → `threshold` rename and the Qwen2-VL loading API are the 5.x forms. W3 must not copy the 4.x-era calls from `old_files/models_registry.py` verbatim.
 
@@ -429,11 +457,31 @@ Tasks:
 
 **Goal:** a durable, re-downloadable-once local/Drive corpus. Every dataset gets a manifest (file list + checksums + row counts) committed to git so the slice is reproducible even though the data isn't in the repo.
 
-**The BigEarthNet problem (§2.2): three tiers, with an explicit abort trigger.**
+**Measured facts (2026-08-29). Use these; do not re-derive, and do not trust any conflicting number in a recon doc.**
+
+| Item | Exact size | Direct URL | Local? |
+|---|---|---|---|
+| BEN `metadata.parquet` (480,038 rows; join + official split) | 3.5 MB | `zenodo.org/records/10891137/files/metadata.parquet?download=1` | yes |
+| `BigEarthNet.txt.parquet` (annotations; types: binary/mcq/captioning/bounding_box) | **466,819,745 B** | `huggingface.co/datasets/BIFOLD-BigEarthNetv2-0/BigEarthNet.txt/resolve/main/BigEarthNet.txt.parquet` — plain HTTP 200, **no `git clone` needed** | yes |
+| BEN S2 archive | 63,251,710,377 B | `zenodo.org/records/10891137/files/BigEarthNet-S2.tar.zst?download=1` | **stream only** |
+| BEN S1 archive | 54,439,153,171 B | same pattern, `BigEarthNet-S1.tar.zst` | **stream only** |
+| RSVQA-LR (images + QA JSONs) | ~150 MB | Zenodo record 6344334 | yes — test split cleanly separable |
+| RSVQA-HR | 14.4 GB (13.5 GB monolithic image tar) | Zenodo record 6344366 | **NO** — test images inseparable from train; violates §2.2a. Use LR only. |
+| VRSBench | ~12.5 GB total; eval needs the ~4 GB validation image set | HuggingFace | yes, but it is the single largest local item — fetch nothing beyond the eval images |
+
+**The S1↔S2 join column is `s1_name`, and `patch_id` is the S2 patch name.** (`docs/status/W1-recon-cdvqa-ben.md` says `patch_id_s1` — that is wrong; the column does not exist. Verified against the real parquet.)
+
+**Still NOT FOUND — resolve before writing those fetchers:** SECOND dataset total size; a direct HTTP link for CDVQA annotations and for SECOND (it is distributed via Google Drive / Baidu, so a plain `curl` will not work and the fetcher needs `gdown` or a manual step).
+
+**BigEarthNet acquisition — see §2.2b. The three-tier guesswork is superseded:** stream the first 10 acquisition folders of each archive for 13,630 paired patches (~8.6 GB streamed, ~3.8 GB stored, all 19 classes). No abort trigger needed; this is a ~10-minute job that runs locally.
+
+<details><summary>Superseded: the original three-tier strategy and its abort trigger</summary>
 
 - **Tier 1 (attempt first, timebox 1 Colab session per modality):** stream-filter. Pull `metadata.parquet` (3.6 MB), choose a **stratified target set of ~5,000 patch IDs** (spread across countries/seasons/climate zones so the slice isn't geographically degenerate), then stream each `.tar.zst` from Zenodo through `zstd -dc | tar -x` extracting only members in the target set, writing to Drive/Kaggle. Disk cost is a few GB; the cost is bandwidth and wall-clock. **Do not naively early-stop after N members** — tar order is alphabetical and S1 and S2 patch names differ, so early-stopping the two archives independently gives you *unpaired* patches, which destroys the whole point.
 - **Tier 2 (if Tier 1 exceeds ~2 sessions per archive):** S2-only via Tier 1 on the smaller archive; take the S1/SAR side from a substitute pairing corpus (SEN12MS or SEN1-2, both far smaller and both co-registered S1/S2).
 - **Tier 3 (abort trigger — if by end of week 1 no S1+S2 pairs are on disk):** switch to RSVQAxBEN (BigEarthNet-derived, much smaller) + a substitute SAR corpus, and record the substitution in `docs/status/W1.md` and in the final writeup. **The PS explicitly permits "any open source training data" — this is a legal move, not a failure.** Escalate to the human when the trigger fires; do not silently downgrade.
+
+</details>
 
 Other datasets (all straightforward, do these first since they're quick wins):
 - **`BigEarthNet.txt` parquet** — `huggingface.co/datasets/BIFOLD-BigEarthNetv2-0/BigEarthNet.txt`. **Not `txt.bigearth.net`** — v1 of this plan had the wrong host. 467 MB, download in full, filter locally to the W1 patch-ID slice.
