@@ -1,0 +1,39 @@
+{
+  "counts": {
+    "files": 4
+  },
+  "dataset": "RSVQA-LR",
+  "file_count": 4,
+  "files": [
+    {
+      "bytes": 95008155,
+      "path": "Images_LR.zip",
+      "sha256": "56c6cdbea32318ee3e181b3f3243748de1ae1b78b148817a9579e1d8d1240da8"
+    },
+    {
+      "bytes": 1922393,
+      "path": "LR_split_test_answers.json",
+      "sha256": "422f926999a99bbae4e590c055949b42192497a2aa93b0a0d4452972f827ddfd"
+    },
+    {
+      "bytes": 123273,
+      "path": "LR_split_test_images.json",
+      "sha256": "bfc6362bbc727b51465091e84ee9299f62990b7c7986aa02d40b4c763fb0c562"
+    },
+    {
+      "bytes": 2717368,
+      "path": "LR_split_test_questions.json",
+      "sha256": "70ce4be36c0b162c58453c7c7f3de2d2cf42dbd3915ac82f527a9a8361ec134f"
+    }
+  ],
+  "notes": "RSVQA-LR test split for the rubric's RSVQA row. Sizes verified against the Zenodo API (record 6344334) on 2026-08-29, not taken from docs. Images_LR.zip carries images for ALL splits -- there is no test-only image archive -- but at 95 MB this does not engage the concern behind PLAN.md \u00a72.2a's test-splits-only rule. RSVQA-HR is deliberately NOT fetched: its test images are inseparable from a 13.5 GB train archive.",
+  "retrieved_utc": "2026-08-29T18:59:11Z",
+  "root": "rsvqa_lr",
+  "schema_version": 1,
+  "source_urls": [
+    "https://zenodo.org/records/6344334"
+  ],
+  "split": "test",
+  "tier": "LOCAL",
+  "total_bytes": 99771189
+}

@@ -21,7 +21,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts.data.common import (
+# Run as a script (`python scripts/data/verify.py`) the repo root is not on
+# sys.path, so the absolute `scripts.data.common` import below fails. Add it.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+from scripts.data.common import (  # noqa: E402
     DEFAULT_MANIFESTS_DIR,
     Manifest,
     iter_manifest_names,
