@@ -255,7 +255,7 @@ run_fusion(optical_path: str, sar_path: str, query: str) -> {
 - 12–13 bands (Sentinel-2)
 - SAR: **dB/log scaling** before any percentile stretch — a linear stretch of a SAR intensity image is unreadable
 
-Returns a `RasterInput` dataclass: `array`, `modality`, `band_count`, `band_names`, `crs`, `transform`, `is_georeferenced`, `source_path`, `display_rgb`.
+Returns a `RasterInput` dataclass: `array`, `modality`, `band_count`, `band_names`, `crs`, `transform`, `is_georeferenced`, `source_path`, `display_rgb`, plus `modality_decision` (the `ModalityDecision` from `io/modality.py`, carrying which precedence tier decided and why, so W6 can drop it into the trace without re-deriving it). *(`modality_decision` added 2026-08-29 via §5.5 — additive, no existing field changed.)*
 
 **Modality is explicit, never guessed silently.** Order of precedence: (1) user selection in the UI, (2) filename/metadata heuristic, (3) band-count heuristic — and whichever was used is recorded in the trace. A wrong silent guess on the hidden eval set costs the whole cross-modal row.
 
@@ -280,7 +280,11 @@ embed_sar(raster: RasterInput)     -> np.ndarray
 ```
 
 Required of W2's policy:
-- **RGB (3-band)** → S2 slots B04/B03/B02. **PAN (1-band)** → replicated across B04/B03/B02. **Cartosat MSI (4-band)** → B02/B03/B04/B08 (blue/green/red/NIR); state the assumed band order and verify it against a real Bhoonidhi product. **SAR (1-band)** → VV slot; **SAR (2-band)** → VV/VH.
+- **RGB (3-band)** → S2 slots B04/B03/B02. **PAN (1-band)** → replicated across B04/B03/B02. **Cartosat MSI (4-band)** → B02/B03/B04/B08 (blue/green/red/NIR). **SAR (1-band)** → VV slot; **SAR (2-band)** → VV/VH.
+
+> ⚠️ **The Cartosat-2S 4-band order above is an UNVERIFIED ASSUMPTION written into this plan, not a sourced fact.** `io/raster.py` deliberately mirrors it so the two modules never disagree about what channel 0..3 means — but that consistency is not verification, and citing §4.5 as the source is circular. It must be checked against a real Bhoonidhi product's metadata XML (`docs/bhoonidhi_registration.md` step 5). If it's wrong, `raster.py`'s display selection and `benclip`'s slot mapping are wrong **together**, silently, on the graded sensor. W1 confirms or corrects it; W2 and W5 must not treat it as settled until then.
+>
+> Related: a **4-band quad-pol RISAT** scene (HH/HV/VH/VV) has the same band count as Cartosat MSI. Band count alone cannot separate them — only the resolved modality can, which is why the SAR/optical branch is driven by modality and never by band count.
 - **Absent slots are filled with the per-channel training mean, not zeros** — zeros are far outside the training distribution and will silently degrade the embedding. Pick this and state it; do not leave it to the caller.
 - `band_mapping` is returned on every call and propagates into the trace's `evidence`, so a weak out-of-domain result is explainable rather than mysterious.
 
@@ -335,7 +339,7 @@ Do not edit `pyproject.toml`. Declare your extra deps in `requirements/extra-w<N
 - The repo currently has **zero commits**. W0's first act is `.gitignore` + initial commit.
 - Commit only paths you own.
 - Branch per workstream: `w<N>-<short-name>`. Merge to `main` only after your acceptance test passes.
-- **Merge order: W0 merges to `main` first.** Every other branch rebases on `main` before merging. With one owner per path this should be conflict-free by construction — if you hit a conflict, someone edited a file they don't own, so stop and report rather than resolving it.
+- **Merge order: W0 merges to `main` first.** *(Done — W0 landed directly on `main` as the initial commit, since the repo had no commits to branch from. Its branch pointer was deleted; `main` is unambiguously the trunk. W1+ branch normally.)* Every other branch rebases on `main` before merging. With one owner per path this should be conflict-free by construction — if you hit a conflict, someone edited a file they don't own, so stop and report rather than resolving it.
 - `.gitignore` must cover: `data/` (except `data/manifests/`), `runs/`, `checkpoints/`, `*.safetensors`, `*.pt`, `__pycache__/`, `.venv/`, `old_files/__pycache__/`.
 
 ### 5.8 Status reporting
