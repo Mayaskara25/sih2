@@ -330,7 +330,7 @@ Callers (W3, W4, W5) **must not** pad, replicate, or reorder bands themselves. I
 
 | Path | Owner | Others |
 |---|---|---|
-| `PLAN.md` | human | read-only |
+| `PLAN.md` | human + the orchestrating session working directly with them | **read-only for every subagent, no exceptions.** A subagent that believes PLAN.md is wrong reports it (§5.5); it does not edit. Plan edits are made by the human or by the session they are directly supervising, and every such edit is called out to the human. If you are a subagent and you see a PLAN.md diff on your branch, that is expected orchestrator activity, not a rogue agent — but flag it anyway if it looks unsanctioned. |
 | `pyproject.toml`, `.gitignore`, `satquery/contracts.py`, `satquery/io/**`, `satquery/runtime/**` | **W0** | read-only |
 | **every `__init__.py`** — W0 pre-declares all module exports pointing at stubs; frozen thereafter | **W0** | read-only |
 | `requirements/extra-<ws>.txt` | that workstream | — |
@@ -367,6 +367,7 @@ Do not edit `pyproject.toml`. Declare your extra deps in `requirements/extra-w<N
 - The repo currently has **zero commits**. W0's first act is `.gitignore` + initial commit.
 - Commit only paths you own.
 - Branch per workstream: `w<N>-<short-name>`. Merge to `main` only after your acceptance test passes.
+- **Never `git add -A` / `git add .`** Stage only the paths you own, by name. A broad add sweeps up other agents' in-progress files and lands them under a commit message that does not describe them, producing misleading history. This happened once on `w1-data` (2026-08-29) and had to be undone with a soft reset — the infra agent caught it. Applies to the orchestrator too, which is who did it.
 - **Merge order: W0 merges to `main` first.** *(Done — W0 landed directly on `main` as the initial commit, since the repo had no commits to branch from. Its branch pointer was deleted; `main` is unambiguously the trunk. W1+ branch normally.)* Every other branch rebases on `main` before merging. With one owner per path this should be conflict-free by construction — if you hit a conflict, someone edited a file they don't own, so stop and report rather than resolving it.
 - `.gitignore` must cover: `data/` (except `data/manifests/`), `runs/`, `checkpoints/`, `*.safetensors`, `*.pt`, `__pycache__/`, `.venv/`, `old_files/__pycache__/`.
 
