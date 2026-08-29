@@ -107,6 +107,39 @@ def test_13_band_sentinel2_like(tmp_path):
     assert result.display_rgb.shape == (h, w, 3)
 
 
+def test_msi_display_selects_documented_rgb_bands(tmp_path):
+    # Pins the exact band indices used for the 12/13-band Sentinel-2 display
+    # subset, so a reordering of _S2_RED_IDX/_S2_GREEN_IDX/_S2_BLUE_IDX (or
+    # an accidental log-scaling step creeping into the optical path) fails
+    # loudly instead of silently producing a wrong false-color image that
+    # every shape/dtype-only test above would still pass.
+    h, w = 16, 16
+    arr = np.stack([_random_band((h, w), seed=i) for i in range(12)], axis=-1)
+    path = str(tmp_path / "s2_indexcheck.tif")
+    _write_geotiff(path, arr)
+
+    result = load_raster(path)
+
+    assert np.array_equal(result.display_rgb[..., 0], _percentile_stretch(result.array[..., 3]))  # B04 red
+    assert np.array_equal(result.display_rgb[..., 1], _percentile_stretch(result.array[..., 2]))  # B03 green
+    assert np.array_equal(result.display_rgb[..., 2], _percentile_stretch(result.array[..., 1]))  # B02 blue
+
+
+def test_cartosat_msi_display_selects_documented_rgb_bands(tmp_path):
+    # Same pin for the 4-band Cartosat-2S MSI case: assumed order is
+    # Blue, Green, Red, NIR (indices 0,1,2,3) per PLAN.md §4.5.
+    h, w = 16, 16
+    arr = np.stack([_random_band((h, w), seed=i) for i in range(4)], axis=-1)
+    path = str(tmp_path / "cartosat_msi_indexcheck.tif")
+    _write_geotiff(path, arr)
+
+    result = load_raster(path, modality="msi")
+
+    assert np.array_equal(result.display_rgb[..., 0], _percentile_stretch(result.array[..., 2]))  # red
+    assert np.array_equal(result.display_rgb[..., 1], _percentile_stretch(result.array[..., 1]))  # green
+    assert np.array_equal(result.display_rgb[..., 2], _percentile_stretch(result.array[..., 0]))  # blue
+
+
 def test_unexpected_band_count_forced_unknown(tmp_path):
     h, w = 8, 8
     arr = np.stack([_random_band((h, w), seed=i) for i in range(7)], axis=-1)
@@ -308,6 +341,11 @@ def test_nan_inf_pixels_handled(tmp_path):
 
     assert not np.isnan(result.display_rgb.astype(np.float64)).any()
     assert np.isfinite(result.display_rgb.astype(np.float64)).all()
+    # display_rgb is uint8, so isnan/isfinite above are trivially satisfied
+    # even if the NaN/inf pixels had poisoned the percentile stretch and
+    # collapsed the whole image to black. Assert the stretch actually
+    # preserved the real dynamic range of the other 97 finite pixels.
+    assert np.unique(result.display_rgb).size > 10
 
 
 def test_missing_file_raises_file_not_found_error():
