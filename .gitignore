@@ -32,3 +32,17 @@ hf_home/
 *.swp
 .idea/
 .vscode/
+
+# --- oversized derived manifest (W1, 2026-08-30)
+# data/manifests/ is normally COMMITTED -- it is what makes a subsampled slice
+# reproducible for someone without the data. The BigEarthNet slice manifest is
+# the one exception: it carries 190,820 per-file sha256 entries (~55 MB), which
+# would burden every clone forever.
+#
+# Reproducibility is NOT lost. The slice is fully determined by
+#   (metadata.parquet, whose sha256 IS committed) + the folder-rank selection in
+#   scripts/data/fetch_bigearthnet.py + the k values recorded in the summary.
+# Re-running the fetcher reproduces the identical 13,630 patches. The full
+# per-file manifest stays on disk locally so verify.py can still check integrity
+# byte-for-byte; only the committed copy is the compact summary.
+data/manifests/bigearthnet_s1s2_slice.json

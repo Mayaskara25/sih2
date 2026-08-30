@@ -1,0 +1,24 @@
+{
+  "counts": {
+    "rows": 9553962
+  },
+  "dataset": "bigearthnet_annotations",
+  "file_count": 1,
+  "files": [
+    {
+      "bytes": 466819745,
+      "path": "BigEarthNet.txt.parquet",
+      "sha256": "d3b97f999456016bb13c2a8e94b8f47825654f07a0394a6b266a38b750ca1554"
+    }
+  ],
+  "notes": "Full BigEarthNet.txt annotations parquet (binary/mcq/captioning/bounding_box QA types over BigEarthNet), fetched in full via plain HTTP -- not filtered down to the S1+S2 image slice's patch IDs. See PLAN.md S2.2/S7 W1.",
+  "retrieved_utc": "2026-08-30T03:06:52Z",
+  "root": "bigearthnet",
+  "schema_version": 1,
+  "source_urls": [
+    "https://huggingface.co/datasets/BIFOLD-BigEarthNetv2-0/BigEarthNet.txt/resolve/main/BigEarthNet.txt.parquet"
+  ],
+  "split": "all",
+  "tier": "LOCAL",
+  "total_bytes": 466819745
+}

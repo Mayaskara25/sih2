@@ -1,0 +1,36 @@
+{
+  "counts": {
+    "classes_covered": 19,
+    "classes_total": 19,
+    "country_Austria": 1649,
+    "country_Finland": 1673,
+    "country_Ireland": 5361,
+    "country_Portugal": 4947,
+    "dropped_unpaired": 0,
+    "files_total": 190820,
+    "k": 10,
+    "paired_patches": 13630,
+    "s1_bytes_extracted": 1581734240,
+    "s1_files_extracted": 27260,
+    "s2_bytes_extracted": 2242952800,
+    "s2_files_extracted": 163560,
+    "split_test": 3512,
+    "split_train": 6519,
+    "split_validation": 3599
+  },
+  "dataset": "bigearthnet_s1s2_slice",
+  "file_count": 190820,
+  "files": [],
+  "notes": "Archive PREFIX: first k=10 acquisition folder(s) (alphabetical order) of each of BigEarthNet-S1.tar.zst and BigEarthNet-S2.tar.zst, streamed via curl|zstd and stopped reading as soon as the stream passed the last targeted folder -- NOT a stratified sample. Covers 4 countries (Austria, Finland, Ireland, Portugal); not representative of the full BigEarthNet geographic/seasonal distribution. See PLAN.md S2.2b and S5.9. | COMMITTED COPY IS A SUMMARY: the full manifest carries 190,820 per-file sha256 entries (~55 MB) and is gitignored; it remains on disk locally for verify.py. The slice is reproducible from metadata.parquet + the folder-rank selection + k, so no reproducibility is lost.",
+  "retrieved_utc": "2026-08-30T03:56:12Z",
+  "root": "bigearthnet/images",
+  "schema_version": 1,
+  "source_urls": [
+    "https://zenodo.org/records/10891137/files/BigEarthNet-S2.tar.zst?download=1",
+    "https://zenodo.org/records/10891137/files/BigEarthNet-S1.tar.zst?download=1",
+    "https://zenodo.org/records/10891137/files/metadata.parquet?download=1"
+  ],
+  "split": "mixed",
+  "tier": "LOCAL",
+  "total_bytes": 3824687040
+}
