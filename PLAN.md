@@ -349,7 +349,11 @@ Callers (W3, W4, W5) **must not** pad, replicate, or reorder bands themselves. I
 If your work order requires a change to a file you do not own, **stop and report it** — do not edit it.
 
 ### 5.2 Stub-first
-W0 ships all five specialist functions as **contract-honouring stubs** that return valid dummy payloads on day one. This is what actually unlocks parallel work: W6 and W7 build against stubs instead of waiting on W2–W5. When a real implementation lands, it replaces the stub body and nothing downstream changes.
+W0 ships all five specialist functions as **contract-honouring stubs** that return valid dummy payloads on day one.
+
+> **Corollary — never assert stub-ness (learned the hard way, 2026-08-30).** A test that asserts `confidence_basis == "stub"` breaks *by construction* the moment the stub-first promise is kept. W3 landing real vqa/caption/grounding broke **12 tests across three files owned by three different workstreams** this way. Assert the durable property — **contract conformance**, which holds for a stub and a real implementation alike — and assert `confidence_basis in CONFIDENCE_BASES`, never `== "stub"`. The one legitimate exception is a single explicit test per still-stubbed specialist recording that it announces itself as a placeholder (§5.9); delete that case when the specialist becomes real.
+>
+> **Second corollary — gate anything that dispatches a real specialist** behind `torch.cuda.is_available()` and a data-present check. When W3 landed, `pytest tests/` began downloading ~5 GB of weights unconditionally, on a fresh clone and on CPU-only machines, while `test_w6_trace.py`'s own docstring still claimed "nothing downloads". Keep routing/validation/rendering tests model-free so a clone without a GPU still gets a green suite. This is what actually unlocks parallel work: W6 and W7 build against stubs instead of waiting on W2–W5. When a real implementation lands, it replaces the stub body and nothing downstream changes.
 
 ### 5.3 No specialist imports another specialist
 Shared code goes in `satquery/io/`, `satquery/runtime/`, or `satquery/adapters/` — all W0/W2-owned. The duplicated-and-diverging `load_image` in the old code is the exact failure mode this prevents. Band handling in particular belongs to `benclip.py` alone (§4.5).

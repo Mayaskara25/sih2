@@ -2,9 +2,12 @@
 W6 execution-trace + orchestrator tests (PLAN.md §4.2, R5: every run writes an
 auditable trace; §4.3 models_used).
 
-All runs use the real W0 stub specialists, so nothing downloads and nothing
-touches data/. Traces are written under tmp_path and validated against the
-contract.
+Traces are written under tmp_path and validated against the contract.
+
+NOTE (updated after W3): this file used to say "nothing downloads". That stopped
+being true the moment W3 replaced the vqa/caption/grounding stubs with real
+models -- dispatching them pulls ~5 GB of weights. Tests that actually dispatch
+are now gated behind CUDA; routing itself stays model-free in test_w6_router.py.
 """
 
 import json
@@ -17,6 +20,15 @@ from affine import Affine
 from satquery.contracts import validate_execution_trace
 from satquery.controller.trace import TASK_ROLES, _merge_models, run_query, write_trace
 from satquery.runtime.modelpool import ModelPool, RoleSpec
+import torch  # noqa: E402
+from satquery.contracts import CONFIDENCE_BASES  # noqa: E402
+
+# Gate anything that dispatches a real specialist. Before this, `pytest tests/`
+# downloaded ~5 GB unconditionally -- on a fresh clone, on a CPU-only box, in CI.
+_CUDA = torch.cuda.is_available()
+requires_real_specialists = pytest.mark.skipif(
+    not _CUDA, reason="dispatching real specialists needs CUDA + downloaded weights"
+)
 
 _T = Affine.translation(10.0, 20.0) @ Affine.scale(0.5, -0.5)
 
@@ -70,6 +82,7 @@ def _assert_trace_valid(trace):
         ("Use the optical and SAR images together.", "fusion", 2, ["optical", "sar"], 2),
     ],
 )
+@requires_real_specialists
 def test_all_five_specialists_reachable_via_run_query(
     query, task, path_count, forced, need, two_imgs, tmp_path
 ):
@@ -81,7 +94,13 @@ def test_all_five_specialists_reachable_via_run_query(
         runs_root=str(tmp_path / "runs"),
     )
     assert trace["task_selected"] == task
-    assert trace["result"]["confidence_basis"] == "stub", "stub specialist must have been called"
+    # R7: assert a specialist ACTUALLY RAN, not that it is still a stub. The
+    # original `== "stub"` inverted the meaning of success the moment W3 made
+    # three of these real -- see the §5.2 corollary in PLAN.md.
+    assert trace["result"]["confidence_basis"] in CONFIDENCE_BASES, (
+        f"{task}: no specialist produced a valid confidence_basis; "
+        f"got {trace['result'].get('confidence_basis')!r}"
+    )
     assert len(trace["models_used"]) >= need, (
         f"{task} must show >= {need} models_used entries, got {trace['models_used']}"
     )

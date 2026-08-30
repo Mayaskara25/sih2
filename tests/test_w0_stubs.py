@@ -1,13 +1,29 @@
 """
-W0 stub conformance: every specialist stub must satisfy its PLAN.md §4.1 contract.
+Specialist contract conformance (PLAN.md §4.1).
 
-This is the test that makes the stub-first rule (PLAN.md §5.2) safe: W6's
-controller and W7's app build against these stubs, so the stubs must be
-contract-valid from day one. When W3/W4/W5 replace a stub body, these tests keep
-passing unchanged — that is the point.
+Originally this file asserted that every specialist was a *stub*. That was a
+design error on W0's part: PLAN.md §5.2 promises "when a real implementation
+lands, it replaces the stub body and nothing downstream changes" — but a test
+asserting `confidence_basis == "stub"` breaks by construction the moment the
+promise is kept. W3 landing real `run_vqa`/`run_caption`/`run_grounding` broke
+8 tests here for exactly that reason.
+
+The durable property is **contract conformance**, which holds for a stub and a
+real implementation alike. That is what this file tests now.
+
+Two consequences worth keeping in mind:
+  - Still-stubbed specialists (`run_change`, `run_fusion`) are tested with fake
+    paths, because a stub never opens the file. Real specialists must be given
+    a REAL image, and are gated behind CUDA + data being present so a clone
+    without a GPU (or without the ~5 GB of weights) still gets a green suite.
+  - When W4/W5 land, move `run_change`/`run_fusion` from the stub section to
+    the real section rather than deleting their assertions.
 """
 
+import glob
+
 import pytest
+import torch
 
 from satquery.contracts import (
     ContractViolation,
@@ -22,23 +38,19 @@ from satquery.specialists.fusion import run_fusion
 from satquery.specialists.grounding import run_grounding
 from satquery.specialists.vqa import run_caption, run_vqa
 
+CUDA_AVAILABLE = torch.cuda.is_available()
+_RSVQA = sorted(glob.glob("data/rsvqa_lr/Images_LR/*.tif"))
+_real_image = _RSVQA[0] if _RSVQA else None
 
-def test_run_vqa_stub_is_contract_valid():
-    assert validate_vqa_result(run_vqa("img.tif", "what is here?")) is not None
-
-
-def test_run_vqa_stub_passes_evidence_through():
-    result = run_vqa("img.tif", "q", evidence={"labels": ["water"]})
-    validate_vqa_result(result)
-    assert result["evidence"] == {"labels": ["water"]}
-
-
-def test_run_caption_stub_is_contract_valid():
-    assert validate_caption_result(run_caption("img.tif")) is not None
+requires_model = pytest.mark.skipif(
+    not CUDA_AVAILABLE or _real_image is None,
+    reason="requires a CUDA device and RSVQA-LR data on disk",
+)
 
 
-def test_run_grounding_stub_is_contract_valid():
-    assert validate_grounding_result(run_grounding("img.tif", "water body")) is not None
+# ---------------------------------------------------------------------------
+# Still stubbed (W4/W5 not landed): fake paths are fine, a stub never opens one.
+# ---------------------------------------------------------------------------
 
 
 def test_run_change_stub_is_contract_valid():
@@ -51,24 +63,64 @@ def test_run_fusion_stub_is_contract_valid():
 
 @pytest.mark.parametrize(
     "fn,args",
-    [
-        (run_vqa, ("i.tif", "q")),
-        (run_caption, ("i.tif",)),
-        (run_grounding, ("i.tif", "t")),
-        (run_change, ("a.tif", "b.tif", "q")),
-        (run_fusion, ("o.tif", "s.tif", "q")),
-    ],
+    [(run_change, ("a.tif", "b.tif", "q")), (run_fusion, ("o.tif", "s.tif", "q"))],
 )
-def test_stubs_declare_themselves_as_stubs(fn, args):
-    """confidence_basis must be 'stub' — PLAN.md §5.9 forbids passing a
-    placeholder off as a real measurement."""
+def test_unimplemented_specialists_declare_themselves_as_stubs(fn, args):
+    """PLAN.md §5.9: a placeholder must announce itself rather than pass as a
+    real measurement. Delete a case here only when that specialist becomes real."""
     assert fn(*args)["confidence_basis"] == "stub"
 
 
+# ---------------------------------------------------------------------------
+# Real implementations (W3): need a real image, gated so a GPU-less clone passes.
+# ---------------------------------------------------------------------------
+
+
+@requires_model
+def test_run_vqa_is_contract_valid():
+    assert validate_vqa_result(run_vqa(_real_image, "what land cover is shown?")) is not None
+
+
+@requires_model
+def test_run_caption_is_contract_valid():
+    assert validate_caption_result(run_caption(_real_image)) is not None
+
+
+@requires_model
+def test_run_grounding_is_contract_valid():
+    assert validate_grounding_result(run_grounding(_real_image, "water body")) is not None
+
+
+@requires_model
+def test_real_specialists_do_not_claim_to_be_stubs():
+    """The inverse of the stub check: once implemented, a specialist must stop
+    reporting "stub" — otherwise W7's app would keep rendering a real answer as
+    "Placeholder — specialist not yet implemented"."""
+    assert run_vqa(_real_image, "what is here?")["confidence_basis"] != "stub"
+
+
+@requires_model
+def test_run_vqa_passes_evidence_through():
+    result = run_vqa(_real_image, "q", evidence={"labels": ["water"]})
+    validate_vqa_result(result)
+    assert result["evidence"].get("labels") == ["water"]
+
+
+# ---------------------------------------------------------------------------
+# Guard against a validator that rubber-stamps anything, which would make every
+# assertion above vacuous. Uses a stub so it needs no GPU and no weights.
+# ---------------------------------------------------------------------------
+
+
 def test_validators_actually_reject_a_broken_payload():
-    """Guards against a validator that accepts anything, which would make every
-    other assertion in this file vacuous."""
-    broken = dict(run_vqa("i.tif", "q"))
+    broken = dict(run_change("a.tif", "b.tif", "q"))
     broken["confidence"] = 1.5
     with pytest.raises(ContractViolation):
-        validate_vqa_result(broken)
+        validate_change_result(broken)
+
+
+def test_validators_reject_an_unknown_confidence_basis():
+    broken = dict(run_fusion("o.tif", "s.tif", "q"))
+    broken["confidence_basis"] = "vibes"
+    with pytest.raises(ContractViolation):
+        validate_fusion_result(broken)

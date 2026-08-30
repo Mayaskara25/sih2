@@ -19,9 +19,18 @@ import pytest
 import rasterio
 from affine import Affine
 
-from satquery.contracts import validate_execution_trace
+from satquery.contracts import CONFIDENCE_BASES, validate_execution_trace
 from satquery.controller.trace import run_query
 from satquery.report import format_confidence_basis, generate_report
+import torch  # noqa: E402
+
+# W3 made vqa/caption/grounding real, so any round trip through run_query on a
+# vqa-routed query now loads ~5 GB of weights. Gate it so a CPU-only clone still
+# gets a green suite; the pure rendering/report logic below stays model-free.
+requires_real_specialists = pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="vqa round trip dispatches a real specialist (needs CUDA + weights)",
+)
 
 # ---------------------------------------------------------------------------
 # Fixtures — synthetic GeoTIFFs (same pattern as W6 tests)
@@ -188,6 +197,7 @@ class TestGenerateReport:
 
 
 class TestControllerRoundTrips:
+    @requires_real_specialists
     def test_single_image_vqa_round_trip(self, vqa_trace):
         validate_execution_trace(vqa_trace)
         assert vqa_trace["task_selected"] == "vqa"
@@ -195,7 +205,10 @@ class TestControllerRoundTrips:
         assert vqa_trace["result"].get("status") != "validation_failed"
         assert len(vqa_trace["models_used"]) >= 1
         # Stub specialist was called
-        assert vqa_trace["result"]["confidence_basis"] == "stub"
+        # A specialist ran and reported a valid basis. Asserting == "stub" here
+        # (as this did) inverts the meaning of success once the specialist is
+        # real -- W3 correctly returns "model_logprob". See PLAN.md §5.2.
+        assert vqa_trace["result"]["confidence_basis"] in CONFIDENCE_BASES
 
     def test_two_image_change_round_trip(self, change_trace):
         validate_execution_trace(change_trace)
