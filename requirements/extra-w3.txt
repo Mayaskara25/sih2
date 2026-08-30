@@ -1,0 +1,7 @@
+# W3 — Single-Image Specialists (VQA, Captioning, Grounding)
+#
+# All runtime dependencies (torch, transformers, accelerate, bitsandbytes,
+# pillow, numpy) are already declared in pyproject.toml (W0-owned) and were
+# verified present/working in this environment:
+#   transformers 5.16.1, bitsandbytes 0.50.2, torch 2.13.0+cu130.
+# No new packages needed. This file exists for §5.6 compliance.
