@@ -717,4 +717,18 @@ blocked, any contract pressure, and real measured numbers. Do not edit PLAN.md.
 
 *Human-owned. Agents write `docs/status/W<N>.md` instead (§5.8).*
 
+- 2026-08-30 — **W0, W1, W6, W7 complete. 241 tests passing.** Requirement status:
+  **R1** pending (W2 in flight) · **R2** ✅ enforced (fusion refuses two optical inputs) ·
+  **R3** ✅ distinct code path, reachable · **R4** ✅ query overrides input count ·
+  **R5** ✅ trace written on success, refusal and crash · **R6** ✅ Streamlit app serves
+  (HTTP 200) · **R7** ✅ grounding reachable · **R8** ✅ vqa + caption + grounding all live.
+  Data on disk and sha256-verified: BigEarthNet 13,630 paired S1+S2 patches (19/19 classes,
+  0 unpaired) + 466 MB annotations, RSVQA-LR test split (772 images). ~27 GB free.
+  Still open: VRSBench (dry-run first, ~4 GB); CDVQA/SECOND blocked on unknown size +
+  Google Drive hosting; **Bhoonidhi registration in progress — still gates the Cartosat
+  band-order verification that §4.5 flags as an unverified assumption.**
+  Two lessons now encoded in §5: never `git add -A` (§5.7), and a self-authored routing
+  test set cannot validate its own router — W6's 100/100 was 71% on independent queries
+  before Tier-1 vocabulary was widened.
+
 - 2026-08-29 — PLAN v2 written. Verified: 4 GB VRAM (not 6); BigEarthNet v2.0 imagery is 54.4 GB + 63.3 GB monolithic `.tar.zst` on Zenodo with no sharded or HF-mirrored access; BigEarthNet.txt lives on HuggingFace, not `txt.bigearth.net`; Cartosat-2S is 1-band PAN / 4-band MSI and RISAT is 1–2 band, so the old `read([1,2,3])` breaks on the actual grading data. Locked: `benclip` multi-sensor encoder as primary adaptation, Qwen2-VL-2B QLoRA as target; GeoChat dropped as a local baseline. Repo still has zero commits — W0 makes the first.
