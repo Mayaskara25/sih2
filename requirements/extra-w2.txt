@@ -1,0 +1,15 @@
+# W2 (benclip) extra dependencies — PLAN.md §5.6.
+#
+# Declared here, NOT in pyproject.toml (W0-owned). W0's lockfile pulls these in.
+#
+# - peft: LoRA on the CLIP vision tower (PLAN.md §3.1 Track A, W2 task 3).
+# - scikit-learn: linear-probe mAP evaluation on BEN 19-class multi-label.
+#   scikit-learn's average_precision_score is the standard mAP for multi-label
+#   land-cover classification; hand-rolling it invites bugs.
+# - datasets: optional, only for convenient HF Hub dumps on Colab/Kaggle. Not
+#   required by the runtime adapter path (satquery/adapters/benclip.py imports
+#   peft and sklearn lazily, inside training/eval functions only), so the local
+#   3.9 GB card's inference path works even if these are not installed.
+peft>=0.13
+scikit-learn>=1.5
+datasets>=3.0

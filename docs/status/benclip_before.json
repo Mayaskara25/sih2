@@ -1,0 +1,11 @@
+{
+  "retrieval_r1": 0.0020624631703005302,
+  "retrieval_r5": 0.007955215085444903,
+  "map": 0.4209463054370586,
+  "macro_f1": 0.26999078198328563,
+  "n_train": 6180,
+  "n_test": 3394,
+  "encoder": "openai/clip-vit-base-patch32",
+  "input_bands": "B04/B03/B02 (RGB composite, 3 channels)",
+  "seconds": 499.4
+}
