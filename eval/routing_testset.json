@@ -1,0 +1,1247 @@
+[
+  {
+    "id": "cha-01",
+    "query": "What changed between these two dates, and where did the change occur?",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "PS representative query, verbatim"
+  },
+  {
+    "id": "cha-02",
+    "query": "Has the built-up area increased, decreased, or remained unchanged?",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "PS representative query, verbatim"
+  },
+  {
+    "id": "cha-03",
+    "query": "compare these two images",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "documented ambiguity default: temporal comparison -> change; modalities present but no joint-modality language"
+  },
+  {
+    "id": "cha-04",
+    "query": "compare the two satellite images and tell me what changed",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-05",
+    "query": "detect changes between the two images",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-06",
+    "query": "what are the differences between these two scenes",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-07",
+    "query": "identify new developments over time",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-08",
+    "query": "how has the coastline changed in this period",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-09",
+    "query": "analyze the change between the before and after images",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-10",
+    "query": "did anything at all change between these two dates",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-11",
+    "query": "was there any new construction between the two images",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-12",
+    "query": "what is different between the earlier image and the later one",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-13",
+    "query": "see how the flood extent evolved between the two acquisition dates",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-14",
+    "query": "quantify the amount of change between the two images",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "no 'what changed' cue; 'change' + 'two images' + NN"
+  },
+  {
+    "id": "cha-15",
+    "query": "anything changed here recently",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual wording; relies on 'changed' + exemplar NN"
+  },
+  {
+    "id": "cha-16",
+    "query": "was the forest area larger or smaller in the second picture",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "large/small comparative, no explicit 'change'"
+  },
+  {
+    "id": "cha-17",
+    "query": "has the river channel shifted since the previous observation",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "'has ... shifted' -> has_changed family"
+  },
+  {
+    "id": "cha-18",
+    "query": "did the agricultural plots grow between these dates",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "near-miss vqa ('did' no rule); 'between these dates' trend cue"
+  },
+  {
+    "id": "cha-19",
+    "query": "what changed in the scene between the first and second image",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "explicit index words + what changed"
+  },
+  {
+    "id": "cha-20",
+    "query": "compare the before and after images to spot any differences",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cha-21",
+    "query": "What changed between these two dates, and where did the change occur?",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": true,
+    "note": "ADVERSARIAL: 1 input, change query; R4 routes to change, validation refuses (trace still written)"
+  },
+  {
+    "id": "fus-22",
+    "query": "Use the optical and SAR images together to identify built-up and water-covered regions.",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "PS representative query, verbatim"
+  },
+  {
+    "id": "fus-23",
+    "query": "combine the optical and SAR data",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-24",
+    "query": "cross-modal analysis of the SAR and optical scenes",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-25",
+    "query": "jointly interpret the sar and optical images",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-26",
+    "query": "fuse the optical and sar channels",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-27",
+    "query": "use both the sar and optical images to find water",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-28",
+    "query": "merge sar and optical information to identify flooded areas",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-29",
+    "query": "how do the radar and optical imagery agree on built-up areas",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "'radar' synonym for SAR (see radar_optical rule)"
+  },
+  {
+    "id": "fus-30",
+    "query": "which areas are flooded, combining both sar and optical data",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-31",
+    "query": "use optical together with sar to map the urban extent",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-32",
+    "query": "single analysis that reads both optical and sar inputs",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual; 'both ... and' + explicit sar/optical"
+  },
+  {
+    "id": "fus-33",
+    "query": "integrate the sar and optical scenes to classify land use",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "'integrate' is not the word 'fuse'; relies on sar+optical rule"
+  },
+  {
+    "id": "fus-34",
+    "query": "combine the optical scan with its radar counterpart",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "paraphrase; 'radar counterpart' replaces 'sar'"
+  },
+  {
+    "id": "fus-35",
+    "query": "Use the optical and SAR images together to identify built-up and water-covered regions.",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": true,
+    "note": "ADVERSARIAL: routing text-driven -> fusion; but no-SAR modalities hard-error (R2)"
+  },
+  {
+    "id": "fus-36",
+    "query": "use the sar and optical pair to gauge flood damage extent",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "fus-37",
+    "query": "juxtapose sar and optical evidence for settlement mapping",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "formal cue word; sar+optical co-occurrence"
+  },
+  {
+    "id": "gro-38",
+    "query": "Highlight the water body referred to in the query.",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "PS representative query, verbatim"
+  },
+  {
+    "id": "gro-39",
+    "query": "locate the buildings in the scene",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-40",
+    "query": "where is the river",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-41",
+    "query": "find the urban area",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-42",
+    "query": "bounding box around the crop fields",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-43",
+    "query": "point to the airport in the image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-44",
+    "query": "mark the roads for me",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-45",
+    "query": "show me where the forest is",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-46",
+    "query": "where exactly is the reservoir",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-47",
+    "query": "segment the lake boundary",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-48",
+    "query": "delineate the flooded zone",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-49",
+    "query": "give me a box around the stadium",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-50",
+    "query": "draw a bounding box around the ship",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-51",
+    "query": "identify the damaged buildings in the neighborhood",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual 'identify the X'; NN exemplar must carry"
+  },
+  {
+    "id": "gro-52",
+    "query": "locate the runway in the aerial view",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-53",
+    "query": "highlight all warehouses in the industrial zone",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "gro-54",
+    "query": "where did the landslide run out",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "near-miss: 'where did' vs 'where is'; NN to grounding via 'where' exemplars"
+  },
+  {
+    "id": "gro-55",
+    "query": "Highlight the water body referred to in the query.",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": true,
+    "note": "ADVERSARIAL: 2 inputs, single-image task; runs on image 1"
+  },
+  {
+    "id": "cap-56",
+    "query": "Describe the land-cover and major objects visible in this image.",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "PS representative query, verbatim"
+  },
+  {
+    "id": "cap-57",
+    "query": "Describe the land-cover and major objects visible in this image.",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "ADVERSARIAL: 2 inputs; 'visible in this image' -> single-image caption on image 1"
+  },
+  {
+    "id": "cap-58",
+    "query": "describe the scene you see",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-59",
+    "query": "what is shown in this image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-60",
+    "query": "caption this satellite image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-61",
+    "query": "provide an overview of what the image shows",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-62",
+    "query": "summarize what you can see in this image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-63",
+    "query": "what does this image contain",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-64",
+    "query": "describe the dominant land cover in the scene",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-65",
+    "query": "give a general description of the scene",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "cap-66",
+    "query": "narrate the contents of the imagery",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual; NN to caption via 'scene/describe' exemplars"
+  },
+  {
+    "id": "cap-67",
+    "query": "describe the first image in this pair",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "requested image 1 -> caption on idx 0"
+  },
+  {
+    "id": "cap-68",
+    "query": "tell me about the second image",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 1,
+    "adversarial": false,
+    "note": "requested image 2 -> caption on idx 1 (image_reference=second)"
+  },
+  {
+    "id": "cap-69",
+    "query": "what's going on in this picture",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "colloquial; NN to caption exemplars"
+  },
+  {
+    "id": "cap-70",
+    "query": "tell me what this scene depicts",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-71",
+    "query": "how many buildings are there in this image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-72",
+    "query": "are there any water bodies visible",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-73",
+    "query": "what is the dominant land cover type",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-74",
+    "query": "which crop is being grown here",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-75",
+    "query": "is there a river in this image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-76",
+    "query": "what fraction of the image is urban area",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-77",
+    "query": "how large is the forested area",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-78",
+    "query": "count the number of vehicles in the parking lot",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-79",
+    "query": "what is the area of the lake",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-80",
+    "query": "what percentage of the scene is cropland",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-81",
+    "query": "how much farmland is visible",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-82",
+    "query": "what crops were harvested this season",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-83",
+    "query": "does this image show any flooded areas",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "near-miss vs fusion wording; no modality names -> stays vqa"
+  },
+  {
+    "id": "vqa-84",
+    "query": "how many houses would you say are here",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual count; NN to count exemplars"
+  },
+  {
+    "id": "vqa-85",
+    "query": "what land use predominates in the scene",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "near-miss vs caption; question about a quantity/type"
+  },
+  {
+    "id": "vqa-86",
+    "query": "which region has the highest built-up density",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "'which' + density -> vqa_which"
+  },
+  {
+    "id": "vqa-87",
+    "query": "count the boats you can spot",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-88",
+    "query": "are there any buildings in this image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-89",
+    "query": "how much of the area is water",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": ""
+  },
+  {
+    "id": "vqa-90",
+    "query": "how many buildings are there in this image",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": true,
+    "note": "ADVERSARIAL: 2 inputs, vqa question; runs on image 1"
+  },
+  {
+    "id": "cap-91",
+    "query": "what is shown in this satellite image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "boundary: 'what is shown' is the caption exemplar phrase -> caption"
+  },
+  {
+    "id": "cha-92",
+    "query": "any changes in this neighborhood recently",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual; 'changes' noun + NN to change exemplars"
+  },
+  {
+    "id": "fus-93",
+    "query": "use sar to complement the optical shots",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "sar"
+    ],
+    "gold_task": "fusion",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "paraphrase; sar+optical co-occurrence, no 'together/fuse'"
+  },
+  {
+    "id": "vqa-94",
+    "query": "estimate the population density in the scene",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "casual estimate; NN to vqa exemplars"
+  },
+  {
+    "id": "cap-95",
+    "query": "describe the overall context of the image",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "caption_describe"
+  },
+  {
+    "id": "gro-96",
+    "query": "where's the bridge over the river",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "grounding",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "contraction 'where's' handled by grounding_where"
+  },
+  {
+    "id": "vqa-97",
+    "query": "is the reservoir full of water",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "vqa",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "near-miss grounding ('where') vs vqa yes/no; no locate cue -> vqa"
+  },
+  {
+    "id": "cha-98",
+    "query": "how has land use changed in this area since last year",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "has ... changed -> change_has_changed"
+  },
+  {
+    "id": "cha-99",
+    "query": "combine both images and look for changes",
+    "input_count": 2,
+    "input_modalities": [
+      "optical",
+      "optical"
+    ],
+    "gold_task": "change",
+    "gold_image_index": 0,
+    "adversarial": true,
+    "note": "ADVERSARIAL: fusion-style 'combine' but no SAR/optical names -> change (documented)"
+  },
+  {
+    "id": "cap-100",
+    "query": "describe the changes in the scene",
+    "input_count": 1,
+    "input_modalities": [
+      "optical"
+    ],
+    "gold_task": "caption",
+    "gold_image_index": 0,
+    "adversarial": false,
+    "note": "ambiguous describe vs change; describe-first phrasing -> caption"
+  }
+]
