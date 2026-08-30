@@ -203,7 +203,13 @@ def test_change_result_artifacts_mapped(two_imgs, tmp_path):
 
 
 def test_write_trace_writes_to_runs_root(tmp_path, two_imgs):
-    trace = run_query("describe the scene", [two_imgs[0]], runs_root=str(tmp_path / "runs"))
+    # Uses a CHANGE query deliberately: this test is about where write_trace puts
+    # the file, not about inference, and run_change is still a stub -- so it stays
+    # model-free. The original "describe the scene" routed to caption, which after
+    # W3 loads Qwen2-VL and hung the CPU-only suite (PLAN.md §5.2 corollary 2).
+    trace = run_query(
+        "what changed between these two dates?", list(two_imgs), runs_root=str(tmp_path / "runs")
+    )
     path = write_trace(trace, runs_root=str(tmp_path / "replayed"))
     assert path == str(tmp_path / "replayed" / trace["run_id"] / "trace.json")
     assert json.load(open(path)) == trace

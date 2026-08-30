@@ -226,6 +226,11 @@ def test_stream_extract_archive_stops_after_selected_folders(tmp_path):
 
 
 def _patch_fetchers(monkeypatch, metadata_df, *, write_annotations=False):
+    # The 5 GB production disk floor is meaningless for a fixture that writes a
+    # few KB, and pytest's tmp_path lives under /tmp -- a ~6.8 GB tmpfs -- so
+    # inheriting the real floor made these tests pass or fail on ambient /tmp
+    # usage rather than on the code under test. Pin a tiny floor.
+    monkeypatch.setattr(ben, "MIN_FREE_BYTES", 1024)
     monkeypatch.setattr(ben, "_fetch_metadata_df", lambda ben_dir: metadata_df)
     if write_annotations:
 

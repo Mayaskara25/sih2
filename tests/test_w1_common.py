@@ -169,7 +169,7 @@ def test_full_download_succeeds_and_matches_content(tmp_path, http_server):
     url = http_server(_make_range_handler(content))
     dest = tmp_path / "out.bin"
 
-    result = download(url, dest, tier=Tier.LOCAL, expected_bytes=len(content), progress=False)
+    result = download(url, dest, min_free_bytes=1024, tier=Tier.LOCAL, expected_bytes=len(content), progress=False)
 
     assert result == dest
     assert dest.exists()
@@ -187,7 +187,7 @@ def test_resume_continues_partial_file_rather_than_restarting(tmp_path, http_ser
     prefix_len = len(content) // 3
     part.write_bytes(content[:prefix_len])
 
-    result = download(url, dest, tier=Tier.LOCAL, expected_bytes=len(content), progress=False)
+    result = download(url, dest, min_free_bytes=1024, tier=Tier.LOCAL, expected_bytes=len(content), progress=False)
 
     assert result == dest
     assert dest.read_bytes() == content, "resumed download must equal the full original content"
@@ -204,7 +204,7 @@ def test_server_ignoring_range_restarts_clean_not_corrupt(tmp_path, http_server)
     # (this handler always answers 200 with the full body).
     part.write_bytes(b"garbage-prefix-that-does-not-belong")
 
-    result = download(url, dest, tier=Tier.LOCAL, expected_bytes=len(content), progress=False)
+    result = download(url, dest, min_free_bytes=1024, tier=Tier.LOCAL, expected_bytes=len(content), progress=False)
 
     assert result == dest
     # Must be exactly the server's content, not garbage-prefix + full body.
@@ -220,7 +220,7 @@ def test_interrupted_download_leaves_no_file_that_looks_complete(tmp_path, http_
     with pytest.raises(DownloadError):
         # expected_bytes deliberately wrong -> size-mismatch guard fires
         # after the transfer, before the atomic rename.
-        download(url, dest, tier=Tier.LOCAL, expected_bytes=len(content) + 999, progress=False)
+        download(url, dest, min_free_bytes=1024, tier=Tier.LOCAL, expected_bytes=len(content) + 999, progress=False)
 
     assert not dest.exists(), "a size-mismatched transfer must never be renamed into the final path"
     assert part.exists(), "the partial file is kept so a retry can inspect/resume it"

@@ -145,15 +145,19 @@ class TestFormatConfidenceBasis:
 
 
 class TestGenerateReport:
-    def test_vqa_report_contains_all_sections(self, vqa_trace, tmp_path):
+    def test_report_contains_all_sections(self, change_trace, tmp_path):
+        # Uses the stub-backed change_trace, not vqa_trace: this asserts REPORT
+        # STRUCTURE, which any valid trace exercises, and change is still a stub
+        # so it stays model-free. vqa_trace dispatches real Qwen2-VL after W3 and
+        # hung the CPU-only suite (PLAN.md §5.2 corollary 2).
         report_path = str(tmp_path / "report.html")
-        result = generate_report(vqa_trace, report_path)
+        result = generate_report(change_trace, report_path)
         assert result == report_path
 
         html_text = Path(report_path).read_text(encoding="utf-8")
-        assert vqa_trace["query"] in html_text
-        assert vqa_trace["run_id"] in html_text
-        assert vqa_trace["task_selected"] in html_text
+        assert change_trace["query"] in html_text
+        assert change_trace["run_id"] in html_text
+        assert change_trace["task_selected"] in html_text
         assert "Execution Report" in html_text
         assert "Full Execution Trace" in html_text
         assert "Models Used" in html_text or "Models" in html_text
@@ -180,10 +184,11 @@ class TestGenerateReport:
         html_text = Path(report_path).read_text(encoding="utf-8")
         assert "validation_failed" in html_text.lower() or "error" in html_text.lower()
 
-    def test_report_is_self_contained(self, vqa_trace, tmp_path):
-        """Report HTML must not reference external CSS/JS/images."""
+    def test_report_is_self_contained(self, change_trace, tmp_path):
+        """Report HTML must not reference external CSS/JS/images. Stub-backed
+        trace keeps this model-free."""
         report_path = str(tmp_path / "report.html")
-        generate_report(vqa_trace, report_path)
+        generate_report(change_trace, report_path)
         html_text = Path(report_path).read_text(encoding="utf-8")
         assert "<link rel=\"stylesheet\"" not in html_text
         assert "<script src=" not in html_text
