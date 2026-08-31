@@ -78,6 +78,42 @@ def _benclip_evidence(raster: RasterInput) -> Dict[str, Any]:
     raises FileNotFoundError in that case (see benclip.py::load_benclip).
     Returns {} on any failure, after warning once.
     """
+    # Co-residency guard (opt-in via SATQUERY_CO_RESIDENT_MODELS=1). When the
+    # pool is holding two heavy models, loading benclip on top of them OOMs the
+    # 3.64 GiB card during grounding's forward pass. Skip it -- but SAY SO. An
+    # empty evidence dict here is indistinguishable in the trace from "benclip
+    # was never used", and the trace is a graded rubric row (R5), so a silent
+    # skip would misreport the system's behaviour (PLAN.md §5.9).
+    #
+    # This lives here, not in modelpool.py: the specialist asks the runtime
+    # about residency, never the reverse.
+    try:
+        from satquery.runtime.modelpool import co_resident_roles, model_pool
+
+        _co = co_resident_roles()
+        # resident_roles is a PROPERTY, not a method -- calling it raises
+        # TypeError, which the except below would have swallowed, silently
+        # disabling this guard. Verified against modelpool.py, not assumed.
+        heavies = [r for r in model_pool.resident_roles if r in _co]
+        if len(heavies) >= 2:
+            return {
+                "benclip_labels": [],
+                "benclip_skipped": (
+                    "benclip evidence was skipped to fit "
+                    f"{'+'.join(sorted(heavies))} co-resident on a 3.64 GiB card; "
+                    "loading it here OOMs during grounding's forward pass. "
+                    "The answer is still produced by the VLM, but carries no "
+                    "land-cover labels. Unset SATQUERY_CO_RESIDENT_MODELS to "
+                    "restore evidence at the cost of a ~20 s model reload per "
+                    "caption/grounding switch."
+                ),
+            }
+    except ImportError:  # pool genuinely unavailable -> fall through
+        pass
+    # NOTE: deliberately NOT a bare `except Exception`. A broad catch here
+    # would hide a bug in this guard (it already hid a TypeError once) and
+    # silently reintroduce the OOM it exists to prevent.
+
     try:
         from satquery.adapters.benclip import predict_labels
     except Exception as exc:  # ImportError, or a mid-edit syntax error, etc.

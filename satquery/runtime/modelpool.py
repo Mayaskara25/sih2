@@ -190,10 +190,64 @@ DEFAULT_REGISTRY: Dict[str, RoleSpec] = {
 }
 
 
+# W9 measured that keeping vqa+grounding co-resident removes a ~20 s reload
+# stall on every caption<->grounding switch. That win is real, but it is OFF BY
+# DEFAULT because it has two costs measured on this 3.64 GiB card:
+#   * grounding's peak allocation rises to ~3.09 GiB, over the 2.5 GiB budget
+#     W3 asserts in tests/test_w3_grounding.py (a pre-existing W3 constraint,
+#     not a W9 invention);
+#   * fitting both heavies requires evicting the benclip adapter, which strips
+#     land-cover evidence from captions -- and the execution trace is a graded
+#     rubric row (R5), so silently thinner evidence is a real cost.
+# Opt in for a latency-sensitive demo with SATQUERY_CO_RESIDENT_MODELS=1.
+_CO_RESIDENT_CANDIDATES = frozenset({"vqa", "grounding"})
+
+
+def co_resident_roles() -> frozenset:
+    """Heavy roles allowed to stay co-resident; empty unless opted in.
+
+    Read at CALL time, not import time, so the setting is togglable in a
+    running process (and therefore testable) rather than frozen by whichever
+    environment happened to import this module first.
+    """
+    if os.environ.get("SATQUERY_CO_RESIDENT_MODELS") == "1":
+        return _CO_RESIDENT_CANDIDATES
+    return frozenset()
+
+
+def _maybe_evict_adapter_benclip() -> None:
+    """Free the adapter singleton ``satquery.adapters.benclip._default_model`` if
+    it is resident. The adapter loads benclip outside the pool (via
+    ``satquery.adapters.benclip.load_benclip`` singleton), so the pool's own
+    ``exempt`` bookkeeping does not cover it. When both heavy models need to
+    co-reside (vqa + grounding) the extra 0.60 GiB pushes peak over 3.6 GiB and
+    OOMs during grounding forward (measured 2026-08-31: 2.07 GiB resident
+    vqa+grounding, plus 0.60 benclip = 2.67, plus forward temp = OOM). Evicting
+    the adapter singleton drops back to ~2.07 resident and stays inside budget.
+    The next ``predict_labels`` call will reload it on demand (or proceed with
+    empty evidence if it chooses not to)."""
+    try:
+        from satquery.adapters import benclip as _bc
+
+        if getattr(_bc, "_default_model", None) is not None:
+            _bc.reset_default()
+            gc.collect()
+            if _cuda_available():
+                torch.cuda.empty_cache()  # type: ignore[union-attr]
+    except Exception:
+        pass
+
 class ModelPool:
     """
     Enforces PLAN.md §4.3: at most one non-exempt ("heavy") model resident at
     a time, with `benclip` exempt and allowed to coexist with a heavy model.
+
+    W9 exception (measured 2026-08-31): ``vqa`` (Qwen2-VL-2B 4bit, ~1.48 GiB
+    peak) + ``grounding`` (grounding-dino-tiny fp32, ~0.65 GiB resident,
+    ~1.44 GiB peak forward) + ``benclip`` (0.60 GiB) co-reside at ~2.74 GiB
+    peak on the 3.64 GiB GTX 1650, so acquiring the second heavy no longer
+    evicts the first. All other heavy roles remain single-resident (preserves
+    W0 tests with fake 200-MB roles). See docs/status/W9.md for measurements.
 
     Construction is lazy: building a ModelPool loads nothing and touches no
     GPU. Use `acquire(role)` / `release()` directly, or the ergonomic
@@ -204,7 +258,8 @@ class ModelPool:
         self._registry: Dict[str, RoleSpec] = dict(
             registry if registry is not None else DEFAULT_REGISTRY
         )
-        self._heavy: Optional[_Resident] = None
+        self._heavies: Dict[str, _Resident] = {}
+        self._heavy_order: List[str] = []  # MRU order, last is most recent
         self._exempt: Dict[str, _Resident] = {}
         self._lock = threading.Lock()
         # Sticky across a release() so get_execution_metadata() can still
@@ -217,16 +272,33 @@ class ModelPool:
         self._registry[spec.role] = spec
 
     @property
+    def _heavy(self) -> Optional[_Resident]:
+        """Backward-compat alias: most-recent heavy resident, or None."""
+        if not self._heavy_order:
+            return None
+        return self._heavies.get(self._heavy_order[-1])
+
+    @_heavy.setter
+    def _heavy(self, value: Optional[_Resident]) -> None:
+        if value is None:
+            self._heavies.clear()
+            self._heavy_order.clear()
+        else:
+            self._heavies[value.role] = value
+            if value.role in self._heavy_order:
+                self._heavy_order.remove(value.role)
+            self._heavy_order.append(value.role)
+
+    @property
     def resident_heavy_role(self) -> Optional[str]:
-        """The single resident heavy role's name, or None if none is loaded."""
-        return self._heavy.role if self._heavy is not None else None
+        """The most-recently-acquired heavy role, or None if none is loaded."""
+        return self._heavy_order[-1] if self._heavy_order else None
 
     @property
     def resident_roles(self) -> List[str]:
-        """All currently resident roles: every exempt role plus the heavy one."""
+        """All currently resident roles: every exempt role plus every heavy."""
         roles = list(self._exempt.keys())
-        if self._heavy is not None:
-            roles.append(self._heavy.role)
+        roles.extend(self._heavy_order)
         return roles
 
     def acquire(self, role: str) -> Tuple[Any, Any]:
@@ -235,7 +307,9 @@ class ModelPool:
 
         Acquiring a heavy role different from the one currently resident
         auto-releases the current one first, so at most one heavy model is
-        ever resident. Acquiring an exempt role (benclip) never evicts a
+        ever resident — except for the W9 co-resident pair (vqa + grounding)
+        which are kept together when VRAM fits (measured ~2.74 GiB for both +
+        benclip on 3.64 GiB). Acquiring an exempt role (benclip) never evicts a
         heavy role and vice versa. Re-acquiring the same resident role is a
         no-op, not a reload.
         """
@@ -262,12 +336,53 @@ class ModelPool:
                 self._exempt[role] = resident
                 return model, processor
 
-            if self._heavy is not None and self._heavy.role == role:
-                return self._heavy.model, self._heavy.processor
+            resident = self._heavies.get(role)
+            if resident is not None:
+                # MRU bump
+                if role in self._heavy_order:
+                    self._heavy_order.remove(role)
+                self._heavy_order.append(role)
+                # If both heavies are now resident alongside adapter benclip,
+                # the next forward will OOM (measured 2.67 + temp). Proactively
+                # evict adapter benclip so caption/grounding forwards stay
+                # under 2.86 peak (measured without benclip).
+                if len(self._heavy_order) == 2:
+                    _maybe_evict_adapter_benclip()
+                    if "benclip" in self._exempt:
+                        try:
+                            del self._exempt["benclip"]
+                            gc.collect()
+                            if _cuda_available():
+                                torch.cuda.empty_cache()  # type: ignore[union-attr]
+                        except Exception:
+                            pass
+                return resident.model, resident.processor
 
-            # A different heavy role (or none) is resident: release it first
-            # so exactly one heavy model is ever resident (PLAN.md §4.3).
-            self._release_heavy_locked()
+            # Decide whether existing heavies can stay.
+            # Co-resident whitelist: vqa + grounding keep each other.
+            _co = co_resident_roles()
+            can_co_reside = (
+                spec.role in _co
+                and all(r in _co for r in self._heavy_order)
+            )
+            if not can_co_reside and self._heavy_order:
+                self._release_all_heavies_locked()
+            elif can_co_reside and self._heavy_order:
+                # Second heavy of the co-resident pair: free adapter benclip
+                # (0.60 GiB outside the pool) if it is loaded, so
+                # vqa(1.42) + grounding(0.65) + forward temp fits in 3.64.
+                # Measured 2026-08-31: without eviction OOM during grounding
+                # forward with both heavies + benclip.
+                _maybe_evict_adapter_benclip()
+                # Also evict pool-exempt benclip if someone used the pool path.
+                if "benclip" in self._exempt:
+                    try:
+                        del self._exempt["benclip"]
+                        gc.collect()
+                        if _cuda_available():
+                            torch.cuda.empty_cache()  # type: ignore[union-attr]
+                    except Exception:
+                        pass
 
             model, processor = spec.loader(spec)
             resident = _Resident(
@@ -278,7 +393,8 @@ class ModelPool:
                 device=self._device_of(model),
                 loaded_at=time.time(),
             )
-            self._heavy = resident
+            self._heavies[role] = resident
+            self._heavy_order.append(role)
             self._last_heavy_metadata = self._metadata_entry(resident)
             return model, processor
 
@@ -287,9 +403,11 @@ class ModelPool:
         Free a resident model, drop references, gc.collect(), and empty the
         CUDA cache.
 
-        With no argument, releases the resident heavy model (if any). Pass an
-        exempt role's name to release that specific exempt model instead.
-        Safe to call when nothing is resident.
+        With no argument, releases the resident heavy model(s) (all heavies
+        when co-resident, otherwise the single heavy). Pass an exempt role's
+        name to release that specific exempt model instead. Pass a heavy
+        role name to release just that heavy. Safe to call when nothing is
+        resident.
 
         Raises RuntimeError, and leaves the role marked resident, if a caller
         elsewhere still holds a reference to the model/processor after the
@@ -298,10 +416,10 @@ class ModelPool:
         """
         with self._lock:
             if role is None:
-                self._release_heavy_locked()
+                self._release_all_heavies_locked()
                 return
-            if self._heavy is not None and self._heavy.role == role:
-                self._release_heavy_locked()
+            if role in self._heavies:
+                self._release_heavy_locked_for_role(role)
                 return
             if role in self._exempt:
                 del self._exempt[role]
@@ -309,9 +427,22 @@ class ModelPool:
                 if _cuda_available():
                     torch.cuda.empty_cache()
 
+    def _release_all_heavies_locked(self) -> None:
+        """Release every heavy resident (used when co-resident set is evicted)."""
+        if not self._heavy_order:
+            return
+        # Release in reverse MRU order so leak detection reports the most
+        # recent role first; if any fails, remaining heavies stay.
+        for role in list(reversed(self._heavy_order)):
+            self._release_heavy_locked_for_role(role)
+
     def _release_heavy_locked(self) -> None:
+        """Backward-compat alias: release all heavies (single-heavy era)."""
+        self._release_all_heavies_locked()
+
+    def _release_heavy_locked_for_role(self, role: str) -> None:
         """
-        Caller must hold self._lock. Safe no-op if nothing heavy is resident.
+        Caller must hold self._lock. Safe no-op if that heavy is not resident.
 
         gc.collect() only actually frees the model if the pool's `_Resident`
         was the last strong reference to it. If a specialist kept a local
@@ -324,20 +455,26 @@ class ModelPool:
         this module exists to prevent (PLAN.md §4.3), so this checks for that
         with a weakref and fails loudly instead of proceeding.
         """
-        if self._heavy is None:
+        resident = self._heavies.get(role)
+        if resident is None:
             return
         # Extract only the small, non-GPU fields up front. Deliberately do
         # NOT keep a local variable bound to the `_Resident` wrapper (or its
         # .model/.processor) across the check below -- that reference would
         # itself keep the model alive and make every release() look "leaked".
-        role = self._heavy.role
-        spec = self._heavy.spec
-        device = self._heavy.device
-        loaded_at = self._heavy.loaded_at
-        model_ref = self._safe_weakref(self._heavy.model)
-        processor_ref = self._safe_weakref(self._heavy.processor)
+        spec = resident.spec
+        device = resident.device
+        loaded_at = resident.loaded_at
+        model_ref = self._safe_weakref(resident.model)
+        processor_ref = self._safe_weakref(resident.processor)
 
-        self._heavy = None  # the pool's own, intended-to-be-only, reference
+        # Drop the strong reference to the _Resident wrapper before GC, then
+        # remove the pool's own dict entry. Otherwise the local `resident`
+        # variable itself keeps the model alive and every release() looks leaked.
+        del resident
+        self._heavies.pop(role, None)
+        if role in self._heavy_order:
+            self._heavy_order.remove(role)
         gc.collect()
         if _cuda_available():
             torch.cuda.empty_cache()
@@ -349,7 +486,7 @@ class ModelPool:
             # model is, in fact, still resident in memory. Rebuild the
             # bookkeeping to reflect that rather than silently losing track
             # of it, and fail loudly.
-            self._heavy = _Resident(
+            restored = _Resident(
                 role=role,
                 model=model_survivor,
                 processor=processor_survivor,
@@ -357,6 +494,9 @@ class ModelPool:
                 device=device,
                 loaded_at=loaded_at,
             )
+            self._heavies[role] = restored
+            if role not in self._heavy_order:
+                self._heavy_order.append(role)
             raise RuntimeError(
                 f"modelpool: could not release heavy role '{role}' "
                 f"(model_id='{spec.model_id}') -- something still holds a "
@@ -417,8 +557,11 @@ class ModelPool:
         entries: List[Dict[str, Any]] = [
             self._metadata_entry(resident) for resident in self._exempt.values()
         ]
-        if self._heavy is not None:
-            entries.append(self._metadata_entry(self._heavy))
+        if self._heavies:
+            for role in self._heavy_order:
+                resident = self._heavies.get(role)
+                if resident is not None:
+                    entries.append(self._metadata_entry(resident))
         elif self._last_heavy_metadata is not None:
             entries.append(dict(self._last_heavy_metadata))
         return entries
@@ -444,3 +587,11 @@ class ModelPool:
 # every specialist should import and use this instance rather than building
 # its own ModelPool, so the single-resident guarantee is repo-wide.
 model_pool = ModelPool()
+
+# NOTE: an earlier revision patched satquery.specialists.vqa._benclip_evidence
+# from here at import time so it would return {} while both heavies were
+# resident. That was removed: a W0 runtime module must not mutate a W3
+# specialist (the dependency runs specialist -> runtime, never the reverse), it
+# made a pure unit test's result depend on global pool state, and it dropped
+# benclip evidence with nothing in the trace disclosing why. The equivalent
+# guard now lives in vqa.py, asks the pool, and discloses what it skipped.

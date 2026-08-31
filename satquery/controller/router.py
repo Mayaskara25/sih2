@@ -222,6 +222,7 @@ Tier1Rule(
     Tier1Rule("caption", "caption_what_can_see", r"\bwhat\s+can\s+(?:you\s+)?(?:see|observe)\b"),
     Tier1Rule("caption", "caption_dominant_scene", r"\bscene\s+content\b"),
     # --- vqa: specific question about image content --------------------------
+    Tier1Rule("vqa", "vqa_rural_urban", r"\brural\b.*\burban\b|\burban\b.*\brural\b"),
     Tier1Rule("vqa", "vqa_how_many", r"\bhow\s+many\b"),
     Tier1Rule("vqa", "vqa_are_there", r"\bare\s+there\b"),
     Tier1Rule("vqa", "vqa_is_there", r"\bis\s+there\b"),
