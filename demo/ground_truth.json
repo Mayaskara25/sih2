@@ -1,0 +1,64 @@
+{
+  "_note": "Reference answers for the demo images, copied verbatim from each dataset's own annotations. Use these to sanity-check outputs -- but read demo/README.md first: some of these are NOT a pass/fail bar for a zero-shot model.",
+  "01_single_image/rsvqa_232_urban.tif": {
+    "source": "RSVQA-LR test split, image 232",
+    "checkable": [
+      {"question": "Is it a rural or an urban area?", "answer": "urban", "type": "rural_urban"},
+      {"question": "Is there a grass area?", "answer": "yes", "type": "presence"},
+      {"question": "Is there a road?", "answer": "yes", "type": "presence"},
+      {"question": "Is a large road present?", "answer": "no", "type": "presence"}
+    ],
+    "not_a_target": [
+      {"question": "What is the number of roads?", "answer": "403", "type": "count",
+       "why": "RSVQA counts are exhaustive object counts; a zero-shot VLM will not reproduce them. See README."}
+    ]
+  },
+  "01_single_image/rsvqa_235_rural.tif": {
+    "source": "RSVQA-LR test split, image 235",
+    "checkable": [
+      {"question": "Is it a rural or an urban area?", "answer": "rural", "type": "rural_urban"},
+      {"question": "Is there a residential building?", "answer": "yes", "type": "presence"},
+      {"question": "Is there a building?", "answer": "yes", "type": "presence"},
+      {"question": "Is there a island?", "answer": "yes", "type": "presence"}
+    ],
+    "not_a_target": [
+      {"question": "What is the number of buildings?", "answer": "5", "type": "count"}
+    ]
+  },
+  "01_single_image/vrsbench_P0003_0002.png": {
+    "source": "VRSBench val split, P0003_0002.png (512x512)",
+    "reference_caption": "The aerial image from GoogleEarth features a group of large yellow buses lined up on the left side, and two small vehicles, one on the top-right and another large vehicle on the bottom-right side of the image. The buses are parked in a lot adjacent to a green area and a road running roughly north-south.",
+    "vqa": [
+      {"question": "What color are the large vehicles seen in the image?", "answer": "Yellow"},
+      {"question": "How many small vehicles are visible in the image?", "answer": "2"},
+      {"question": "Is there a vehicle located at the top-most position in the provided image?", "answer": "Yes"},
+      {"question": "What is the orientation of the road in the image?", "answer": "North-South"}
+    ],
+    "referring": [
+      {
+        "expression": "The large yellow vehicle situated closest to the green area.",
+        "vrsbench_raw": "{<25><40><33><60>}",
+        "raw_format": "x1,y1,x2,y2 on a 0-100 grid -- NOT pixels",
+        "contract_box_2d_pixels": [204.8, 128.0, 307.2, 168.96],
+        "contract_format": "[ymin, xmin, ymax, xmax] in pixels, per PLAN.md 4.1",
+        "why_this_matters": "Both the scale AND the axis order differ. Skipping either conversion yields a meaningless IoU rather than an error -- this exact mismatch was caught before publishing rubric row 1d."
+      },
+      {"expression": "The large vehicle located at the bottom-left corner of the image.", "vrsbench_raw": "{<11><96><24><100>}"},
+      {"expression": "The small dark-colored vehicle located at the top-right corner of the image.", "vrsbench_raw": "{<87><29><92><36>}"}
+    ]
+  },
+  "02_change_pair": {
+    "source": "SECOND change-detection test split, pair 00014 (512x512)",
+    "ground_truth_change_fraction": 0.471,
+    "measured_how": "fraction of pixels where the per-date semantic label differs (label1 != label2), computed over the two GT label PNGs shipped alongside",
+    "baseline_to_beat": "A degenerate 'everything changed' predictor scores precision equal to the GT change rate. Over the 30-pair scored subsample that floor is 0.1832 and the system scores 0.2492 -- 1.36x trivial. Real signal, but weak.",
+    "note": "The GT label PNGs are for your eyes only -- the system never sees them."
+  },
+  "03_cross_modal": {
+    "source": "BigEarthNet v2.0, patch S2A_MSIL2A_20170613T101031_N9999_R022_T33UUP_61_39 (Austria, test split) + its co-registered S1 pair S1A_IW_GRDH_1SDV_20170613T165043_33UUP_61_39",
+    "ground_truth_labels": ["Arable land", "Broad-leaved forest", "Inland waters"],
+    "optical_file": "S2_optical_RGB_61_39.tif -- Sentinel-2 B04/B03/B02 stacked to 3 bands, resolves to modality 'optical'",
+    "sar_file": "S1_SAR_VV_VH_61_39.tif -- Sentinel-1 VV/VH stacked to 2 bands, resolves to modality 'sar'",
+    "note": "These two are the SAME 120x120 ground footprint on the SAME date, which is what makes the cross-modal comparison meaningful. Both stacks were built from the original per-band BigEarthNet tifs; band order matters (PLAN.md 4.5) and these are in the order benclip expects."
+  }
+}

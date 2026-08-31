@@ -102,7 +102,13 @@ code.
 ```
 
 Upload one image (VQA / captioning / grounding) or two (change / fusion), pick the modality
-for each, ask a question. Model weights download from HuggingFace on first use (~9.6 GB total,
+for each, ask a question.
+
+**Start with [`demo/`](demo/README.md)** — nine sample images (2.0 MB, committed, no datasets
+needed) that exercise all five specialists, with the exact queries to type, the route each one
+should take, and reference answers in `demo/ground_truth.json`. It also walks the two graded
+behaviours that are easy to miss: the R2 refusal when you hand fusion two optical images, and
+R4's query-text-overrides-file-count. Model weights download from HuggingFace on first use (~9.6 GB total,
 cached in `~/.cache/huggingface`), so the first query of each type is slow.
 
 **Without the benclip checkpoint** (see below) everything still runs — you lose the
