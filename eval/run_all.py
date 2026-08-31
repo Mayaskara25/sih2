@@ -304,8 +304,12 @@ def render_results(collected: Dict[str, dict], cross: dict) -> str:
         "scored 71% before fixes and 92% after; (b) W8 pre-routed all 10,004 active "
         "RSVQA test questions and found 222 (2.2%) routed away from vqa -- including "
         "rural_urban at 100/100 misrouted to grounding, i.e. an ENTIRE question "
-        "category is structurally unscored for VQA. Real-query routing fidelity is "
-        "97.8%, not 100%. See docs/status/W8.md; the fix is W6-owned.")
+        "category is structurally unscored for VQA. Real-query routing fidelity was "
+        "97.8%, not 100%. UPDATED 2026-08-31 (W9): the rural_urban misroute is "
+        "FIXED -- a Tier-1 rule vqa_rural_urban now routes it to vqa, measured "
+        "0/100 misrouted (was 100/100), and full-corpus fidelity rose to "
+        "122/10004 (98.78%, was 222/10004 = 97.8%). The self-grading caveat "
+        "above still stands. See docs/status/W8.md and docs/status/W9.md.")
     rows.append("")
 
     return "\n".join(rows)
