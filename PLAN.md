@@ -93,6 +93,11 @@ One S2 patch ≈ **165 KB** on disk (4×29 KB @10 m, 6×7.5 KB @20 m, 2×1.2 KB 
 
 ### 2.2a Disk budget — **33 GB free on `/home` (re-measured 2026-08-29 after the user freed space).**
 
+> **Update 2026-08-31: 5.2 GB free.** All six datasets are now on disk (17 GB) alongside a
+> 5.7 GB `.venv` and a 9.6 GB HuggingFace model cache. The tiering below still holds and is
+> the reason it fits at all — but there is no longer headroom for another dataset without
+> deleting one. Check `df -h /home` before any fetch.
+
 The 118 GB of BigEarthNet archives **never touch the local disk**, and neither does the extracted slice. Split every dataset into one of three tiers and respect the tier:
 
 | Tier | What | Where it lives | Local cost |
@@ -288,6 +293,14 @@ Returns a `RasterInput` dataclass: `array`, `modality`, `band_count`, `band_name
 **Modality is explicit, never guessed silently.** Order of precedence: (1) user selection in the UI, (2) filename/metadata heuristic, (3) band-count heuristic — and whichever was used is recorded in the trace. A wrong silent guess on the hidden eval set costs the whole cross-modal row.
 
 ### 4.5 `benclip` band-mapping contract — **the W2↔W3↔W5 integration seam**
+
+> **Standing constraint, added 2026-08-31.** The Cartosat/RISAT band order this section
+> assumes is **unverified and cannot be verified through Bhoonidhi** — Cartosat-2S is priced,
+> not open data, and RISAT-1's open tier yields only low-resolution microwave with no
+> selectable products. Open substitutes (Resourcesat LISS-III/AWiFS, Cartosat-1 ortho) do not
+> settle it: **LISS-III is green/red/NIR/SWIR with no blue band**, so it cannot fill the
+> B02 slot this contract names. Treat the mapping below as an assumption to disclose, not a
+> fact to defend. Details: `docs/bhoonidhi_registration.md`.
 
 `benclip` trains on a 14-channel stem (12×S2 + 2×S1), but its callers hand it whatever the user uploaded: W3 passes **3-band VRSBench PNGs**, W5 passes **1-band Cartosat PAN, 4-band Cartosat MSI, and 1–2-band RISAT**. If each caller invents its own padding, W3's VRSBench numbers stop being comparable to W5's Bhoonidhi behaviour and the mismatch surfaces in week 3.
 
@@ -720,6 +733,66 @@ blocked, any contract pressure, and real measured numbers. Do not edit PLAN.md.
 ## 11. Progress Log
 
 *Human-owned. Agents write `docs/status/W<N>.md` instead (§5.8).*
+
+- 2026-08-31 — **ALL WORK ORDERS COMPLETE. 8/8 hard requirements. 378 tests passing, no stubs.**
+  *(Written by Claude at the owner's explicit request; §11 is otherwise human-owned.)*
+  Supersedes the 2026-08-30 entry below — "241 tests passing" and "R1 pending" are both stale.
+
+  **R1 ✅ EARNED — the requirement that could have disqualified us.** `benclip` (CLIP ViT-B/32,
+  14-channel S1+S2 stem, LoRA r=8 merged) trained on a free Colab T4. Measured on the FULL
+  held-out split (`n_train` 6180 / `n_test` 3394): linear-probe **mAP 0.42095 → 0.43134
+  (+2.5%)**, **macro-F1 0.26999 → 0.30542 (+13.1%)**. Reproduced on local hardware to 6 decimal
+  places; checkpoint loads in 24.8 s. Evidence: `docs/status/W2.md`,
+  `docs/status/benclip_after_v2.json`. R2–R8 all ✅, unchanged.
+
+  **W2, W3, W4, W5, W8, W9 landed.** Every specialist is real — `run_change` was the last stub
+  and W4 closed it (registration skip-or-ORB, histogram matching, differencing + morphological
+  cleanup, per-class benclip delta). 378 passed / 0 failed with full data + GPU; **326 passed /
+  52 skipped / 0 failed on a bare clone with no data, no checkpoint and no GPU** — every gated
+  test skips with a reason, so `pytest` is a valid install check for a teammate.
+
+  **W9 fixed a whole question category.** `rural_urban` was **100/100 misrouted** to grounding
+  (no Tier-1 rule matched; Tier-2 idf-cosine let the short grounding exemplar win 0.797 vs
+  0.765). Now **0/100**; full-corpus fidelity over all 10,004 active RSVQA questions
+  **97.8% → 98.78%**. Also: model-switch stall ~20 s → 0.75 s warm, but **opt-in only**
+  (`SATQUERY_CO_RESIDENT_MODELS=1`) because co-residency peaks at 3089 MB on a 3.64 GiB card
+  and costs the benclip evidence layer — which is now *disclosed* in the trace, never silently
+  dropped.
+
+  **§4.5's Cartosat band order is now PERMANENTLY unverifiable via Bhoonidhi — treat it as a
+  standing constraint, not an open task.** Cartosat-2S is **priced, not open data**; RISAT-1
+  under Open Data offers only low-resolution microwave with no selectable products. The nearest
+  open substitutes are Resourcesat LISS-III/AWiFS and Cartosat-1 ortho, and **LISS-III has no
+  blue band** while §4.5 assumes B02/B03/B04/B08. See the correction banner in
+  `docs/bhoonidhi_registration.md` and the note added to §4.5. Rubric row 5 (joint cross-modal)
+  therefore has no held-out reference split and stays PLACEHOLDER with a named blocker —
+  `run_fusion` itself is real and tested against BigEarthNet S1+S2.
+
+  **Two numbers are deliberately unpublished, both because the metric is invalid rather than
+  missing** (§5.9). CDVQA change-VQA: 1,230 questions ran, containment **0.0512 against a
+  0.3163 majority floor** — *below* the trivial baseline, the signature of a vocabulary/format
+  mismatch (`run_change` speaks BigEarthNet's 19 classes, CDVQA expects yes/no or SECOND's six
+  tokens). Retrieval R@1 must never be read as a headline: **91.0% of test patches share their
+  exact label set** with another (614 are all `['Arable land','Pastures']`), so best-case R@1
+  for a *perfect* semantic model is **0.1828**, not 1.0.
+
+  **Honest weak spots to volunteer before a judge finds them:** change-mask precision **0.2492
+  vs a 0.1832 trivial floor** (real but weak — classical differencing, no trained head, and it
+  over-flags at 0.259 predicted vs 0.183 actual); captioning/grounding are **zero-shot** stock
+  Qwen2-VL-2B + Grounding DINO, with CIDEr a labelled stdlib proxy, not `pycocoevalcap`; and
+  routing 1.000 is **self-graded** (§8 lesson below, still true).
+
+  **Handover:** `README.md` added (tiered setup, measured install path, limitations up front) —
+  W0's §6 layout never specified one. `origin` was **empty**; `w1-data` is now pushed and is the
+  remote default branch. `checkpoints/benclip/benclip_state.pt` (385 MB) is gitignored and
+  shared out-of-band as `checkpoints/benclip_state.zip` (sha256
+  `93504efd6c4862e59670b688d5038264bff7894b84c11eae6b12fcb4884a5b4e`). Disk is **5.2 GB free**
+  on `/home` — §2.2a's 33 GB figure is spent.
+
+  **Lesson, now three-for-three: a work order cannot grade its own homework.** W2 reported "R1
+  satisfied" while mAP had *regressed*; W6 reported 100/100 routing against a test set it wrote
+  itself; W9 reported "378 passing" when the suite was 375/3. Every one was caught by re-running
+  independently, none by reading the status doc. Re-run before you believe a report.
 
 - 2026-08-30 — **W0, W1, W6, W7 complete. 241 tests passing.** Requirement status:
   **R1** pending (W2 in flight) · **R2** ✅ enforced (fusion refuses two optical inputs) ·

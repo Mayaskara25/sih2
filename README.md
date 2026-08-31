@@ -56,14 +56,12 @@ still works** — nothing assumes a small card. If you have less, it won't.
 
 ## Setup
 
-> ⚠️ **The work is on branch `w1-data`, and `origin` is currently empty** —
-> `git ls-remote origin` returns nothing, so `github.com:Mayaskara25/sih2.git` has never been
-> pushed to. Local `main` is **28 commits behind** `w1-data`. Until it is pushed, cloning gets
-> you nothing; once it is, **check out `w1-data`**, not `main`.
+> **Branch note:** all the work is on **`w1-data`**, which is the remote's default branch — a
+> plain `git clone` lands on it, no checkout needed. `main` exists only locally, 28 commits
+> behind, and is **not** pushed. Don't go looking for it.
 
 ```bash
 git clone git@github.com:Mayaskara25/sih2.git && cd sih2
-git checkout w1-data
 
 uv sync --extra dev                                     # runtime + pytest, Python 3.11
 uv pip install peft scikit-learn datasets               # needed by benclip + eval/adaptation.py
@@ -131,16 +129,32 @@ propagating. Nothing is silently omitted.
 
 ## The benclip checkpoint — ⚠️ ACTION NEEDED BEFORE HANDOVER
 
-`checkpoints/benclip/benclip_state.pt` is **384 MB and gitignored** — it is not in this repo
+`checkpoints/benclip/benclip_state.pt` is **385 MB (384,551,295 bytes) and gitignored** — it is not in this repo
 and you cannot get it by cloning. It is the domain-adapted CLIP vision tower (LoRA, trained on
 BigEarthNet S1+S2 pairs on a Colab T4) that earns rubric row 4.
 
-<!-- REPO OWNER: host benclip_state.pt (Drive / HF / release asset) and paste the link here.
+It is packaged for out-of-band sharing as **`checkpoints/benclip_state.zip`** — 289 MB
+(deflate 25%), containing the checkpoint plus a `README-checkpoint.txt` with placement and
+verification instructions. That zip is gitignored; it has to be sent over Drive / a release
+asset / anything that takes a 289 MB file.
+
+<!-- REPO OWNER: upload checkpoints/benclip_state.zip and paste the link here.
      Until this line is filled in, the handover is incomplete for anyone but the owner. -->
 
-**Download link: _____________________ (not yet published)**
+**Download link: _____________________ (zip built, not yet uploaded)**
 
-Place it at `checkpoints/benclip/benclip_state.pt`, or point elsewhere:
+Verify what you receive before using it:
+
+```bash
+sha256sum benclip_state.zip
+# 544ae73dcdc17e516082a9e58d69e0022281b54c53f7f5d36eeab4fa24639fef
+unzip benclip_state.zip -d checkpoints/benclip/
+sha256sum checkpoints/benclip/benclip_state.pt
+# 93504efd6c4862e59670b688d5038264bff7894b84c11eae6b12fcb4884a5b4e
+```
+
+(The inner hash was verified to survive the zip roundtrip.) Place it at
+`checkpoints/benclip/benclip_state.pt`, or point elsewhere:
 
 ```bash
 export SATQUERY_BENCLIP_PATH=/path/to/dir-containing-benclip_state.pt
