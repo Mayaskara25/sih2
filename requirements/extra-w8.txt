@@ -1,0 +1,19 @@
+# W8 — Evaluation Harness
+#
+# PLAN.md §5.6: declare extra deps here, NOT in pyproject.toml (W0-owned).
+#
+# The harness itself (eval/_) is pure-Python + stdlib where possible. All
+# measurement deps are already in pyproject.toml (W0-owned) and verified in
+# this environment:
+#   torch 2.13.0+cu130, transformers 5.16.1, bitsandbytes 0.50.2,
+#   numpy, scipy, scikit-learn>=1.5 (W2 extra), rasterio, pillow.
+#
+# Verified NOT available and deliberately NOT required:
+#   nltk, sacrebleu, rouge_score — plan is stdlib implementations for §5.4
+#   (eval/_common implements BLEU and a ROUGE-L proxy; no scorer package is
+#    added to keep the graders' runtime dependency-free and deterministic).
+#   MS-COCO CIDEr is also stdlib-implemented as an explicit proxy (see
+#   eval/_common.cidre); it is labelled non-official in RESULTS.md.
+#
+# No new package is needed for W8. This file exists for §5.6 compliance, in
+# line with extra-w3.txt / extra-w7.txt.
