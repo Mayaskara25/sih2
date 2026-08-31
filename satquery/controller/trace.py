@@ -351,8 +351,9 @@ def run_query(
         "routing_resolution": decision.resolution_note,
         "models_derivation": (
             "task-planned roles from DEFAULT_REGISTRY merged with "
-            "model_pool.get_execution_metadata(); planned entries describe the "
-            "selected/sequenceable models, not an observed load (stub era)"
+            "model_pool.get_execution_metadata(); a planned entry names a role "
+            "the task sequences, and carries observed load metadata once that "
+            "role has actually been acquired"
         ),
     }
 

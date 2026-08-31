@@ -218,7 +218,7 @@ def generate_report(trace: Dict[str, Any], output_path: str) -> str:
     <h2>Models Used</h2>
     <table>
       <thead><tr><th>Role</th><th>Name</th><th>Revision</th><th>Precision</th><th>Device</th></tr></thead>
-      <tbody>{models_html if models_html else '<tr><td colspan="5" class="meta">No models loaded (stub era).</td></tr>'}</tbody>
+      <tbody>{models_html if models_html else '<tr><td colspan="5" class="meta">No models recorded for this run.</td></tr>'}</tbody>
     </table>
 
     <h2>Execution Summary</h2>

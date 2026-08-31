@@ -167,10 +167,35 @@ def render_results(collected: Dict[str, dict], cross: dict) -> str:
     rows.append("|---|---|---|---|---|---|")
 
     v = collected["vrsbench"]
-    rows.append("| 1 | Single-image captioning & grounding (VRSBench) | "
-                f"caption BLEU / ROUGE-L / CIDEr-IoU | "
-                f"{_value_cell(None, None, None)} | {v.get('n')} | {v.get('date')} |")
-    rows.append("    (blocker) " + (v["blocker"] if v["status"] == _c.PLACEHOLDER else ""))
+    # Status-driven, not hardcoded: this row previously rendered PLACEHOLDER
+    # unconditionally and would have suppressed measured numbers.
+    if v.get("status") == _c.PLACEHOLDER:
+        rows.append("| 1 | Single-image captioning & grounding (VRSBench) | "
+                    f"caption BLEU / ROUGE-L / CIDEr + grounding IoU | "
+                    f"{_c.PLACEHOLDER} | {v.get('n')} | {v.get('date')} |")
+        rows.append("    (blocker) " + v.get("blocker", ""))
+    else:
+        rows.append("| 1 | Captioning (VRSBench) | caption BLEU | "
+                    f"{v['bleu']:.4f} | {v.get('n')} | {v.get('date')} |")
+        rows.append("| 1b | Captioning (VRSBench) | caption ROUGE-L | "
+                    f"{v['rouge_l']:.4f} | {v.get('n')} | {v.get('date')} |")
+        rows.append("| 1c | Captioning (VRSBench) | caption CIDEr (proxy) | "
+                    f"{v['cider_proxy']:.4f} | {v.get('n')} | {v.get('date')} |")
+        rows.append("| 1d | Grounding (VRSBench referring) | mean IoU | "
+                    f"{v['grounding_iou']:.4f} | {v.get('n_iou')} | {v.get('date')} |")
+        rows.append(
+            "    (note) ZERO-SHOT: captions come from stock Qwen2-VL-2B and boxes from "
+            "stock Grounding DINO -- neither is fine-tuned on VRSBench, so these are "
+            "not comparable to VRSBench leaderboard numbers for tuned models. CIDEr is "
+            "a PROXY implementation (see eval/_common.py), not the reference "
+            "pycocoevalcap scorer; it is labelled as such rather than passed off as the "
+            "standard metric. Grounding is reported as MEAN IoU over the "
+            f"{v.get('n_iou')} items where the detector returned a box (of {v.get('n')} "
+            "scored); VRSBench's own paper reports accuracy@IoU>0.5, a different "
+            "quantity -- do not compare the two directly. Reference boxes are converted "
+            "from VRSBench's 0-100 (x1,y1,x2,y2) grid to the contract's pixel "
+            "(ymin,xmin,ymax,xmax); both the scale and the axis order differ, and "
+            "skipping either conversion yields a meaningless IoU rather than an error.")
     rows.append("")
 
     q = collected["vqa"]
