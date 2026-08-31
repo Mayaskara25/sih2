@@ -133,23 +133,19 @@ propagating. Nothing is silently omitted.
 
 ---
 
-## The benclip checkpoint — ⚠️ ACTION NEEDED BEFORE HANDOVER
+## The benclip checkpoint — sent to you separately
 
-`checkpoints/benclip/benclip_state.pt` is **385 MB (384,551,295 bytes) and gitignored** — it is not in this repo
-and you cannot get it by cloning. It is the domain-adapted CLIP vision tower (LoRA, trained on
-BigEarthNet S1+S2 pairs on a Colab T4) that earns rubric row 4.
+`checkpoints/benclip/benclip_state.pt` is **385 MB (384,551,295 bytes) and gitignored** — it is
+not in this repo and you cannot get it by cloning. It is the domain-adapted CLIP vision tower
+(LoRA, trained on BigEarthNet S1+S2 pairs on a Colab T4) that earns rubric row 4.
 
-It is packaged for out-of-band sharing as **`checkpoints/benclip_state.zip`** — 289 MB
-(deflate 25%), containing the checkpoint plus a `README-checkpoint.txt` with placement and
-verification instructions. That zip is gitignored; it has to be sent over Drive / a release
-asset / anything that takes a 289 MB file.
+**You should have received `benclip_state.zip` over WhatsApp** — 289 MB, containing the
+checkpoint plus a `README-checkpoint.txt` repeating these instructions. If you don't have it,
+ask; there is no download link.
 
-<!-- REPO OWNER: upload checkpoints/benclip_state.zip and paste the link here.
-     Until this line is filled in, the handover is incomplete for anyone but the owner. -->
-
-**Download link: _____________________ (zip built, not yet uploaded)**
-
-Verify what you receive before using it:
+**Check the hash before you use it.** It came over a messaging app, so this is not a formality —
+a truncated or re-encoded file will fail later with a confusing torch error rather than an
+obvious one:
 
 ```bash
 sha256sum benclip_state.zip
