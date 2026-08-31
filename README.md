@@ -56,30 +56,51 @@ still works** — nothing assumes a small card. If you have less, it won't.
 
 ## Setup
 
+> ⚠️ **The work is on branch `w1-data`, and `origin` is currently empty** —
+> `git ls-remote origin` returns nothing, so `github.com:Mayaskara25/sih2.git` has never been
+> pushed to. Local `main` is **28 commits behind** `w1-data`. Until it is pushed, cloning gets
+> you nothing; once it is, **check out `w1-data`**, not `main`.
+
 ```bash
-git clone <this repo> && cd sih2
-uv sync                 # creates .venv from uv.lock, Python 3.11
+git clone git@github.com:Mayaskara25/sih2.git && cd sih2
+git checkout w1-data
+
+uv sync --extra dev                                     # runtime + pytest, Python 3.11
+uv pip install peft scikit-learn datasets               # needed by benclip + eval/adaptation.py
+uv pip install matplotlib                               # optional: fusion agreement map
 ```
 
-No `pip install -r requirements.txt` — `requirements/extra-w*.txt` are per-work-order
-dependency *declarations* (PLAN.md §5.6), not install lists. `pyproject.toml` + `uv.lock` are
-the real dependency set.
+**`uv sync` on its own is not enough** — measured with `uv sync --frozen --dry-run`, a bare
+sync would *uninstall* `pytest`, `pytest-cov`, `peft`, `scikit-learn` and `datasets`, because
+they are declared as a PEP 621 extra and in `requirements/extra-w*.txt` rather than in the
+main dependency list. `--extra dev` restores pytest; the second line restores the rest.
+(`matplotlib` is not installed on the dev machine either, so fusion currently skips the
+agreement map rather than rendering it — by design, see `requirements/extra-w5.txt`.)
 
-### Tier 0 — verify your install (no data, no GPU, no weights, ~25 s)
+`requirements/extra-w*.txt` are per-work-order dependency *declarations* (PLAN.md §5.6), not
+install lists — there is no `requirements.txt` to pip-install.
+
+**Then call the venv directly, not bare `uv run`.** For the same reason, a bare `uv run <cmd>`
+re-syncs the environment first and will drop `pytest`, `peft`, `scikit-learn` and `datasets`
+again. Use `.venv/bin/python -m ...` (what every measurement below used), or
+`uv run --no-sync ...`, or activate the venv once with `source .venv/bin/activate`.
+
+### Tier 0 — verify your install (no data, no GPU, no weights, under a minute)
 
 ```bash
-CUDA_VISIBLE_DEVICES="" uv run pytest -q -rs
+CUDA_VISIBLE_DEVICES="" .venv/bin/python -m pytest -q -rs
 ```
 
 **Measured on a fresh clone with no `data/` and no checkpoint: 326 passed, 52 skipped,
-0 failed, 23.8 s.** Everything that needs a GPU, a dataset, or the benclip checkpoint skips
-with a reason instead of failing. If you see failures here, your environment is wrong — not
-the code.
+0 failed, 42.3 s** (23.8 s with `HF_HUB_OFFLINE=1`; the difference is HF cache revalidation,
+not a download). Everything that needs a GPU, a dataset, or the benclip checkpoint skips with
+a reason instead of failing. If you see failures here, your environment is wrong — not the
+code.
 
 ### Tier 1 — run the app
 
 ```bash
-uv run streamlit run app/main.py
+.venv/bin/python -m streamlit run app/main.py
 ```
 
 Upload one image (VQA / captioning / grounding) or two (change / fusion), pick the modality
@@ -89,19 +110,21 @@ cached in `~/.cache/huggingface`), so the first query of each type is slow.
 **Without the benclip checkpoint** (see below) everything still runs — you lose the
 land-cover evidence layer: VQA and captioning report `benclip_skipped`, change reports
 `benclip_t0_error` with empty per-class deltas, fusion reports no cross-modal agreement.
-The app does not crash, and the trace says so explicitly rather than silently omitting it.
+Verified: the adapter raises `FileNotFoundError` for both a missing and an empty
+`checkpoints/benclip/`, and all four call sites catch it and record it in the trace rather than
+propagating. Nothing is silently omitted.
 
 ### Tier 2 — run the full test suite (needs GPU + datasets)
 
 ```bash
-uv run pytest -q          # ~8 min (486 s measured), 378 passed on the dev machine
+.venv/bin/python -m pytest -q      # ~8 min (486 s measured), 378 passed on the dev machine
 ```
 
 ### Tier 3 — reproduce `docs/RESULTS.md` (needs all six datasets)
 
 ```bash
-uv run python eval/run_all.py
-uv run python eval/adaptation.py --full   # the authoritative R1 numbers, full split
+.venv/bin/python eval/run_all.py
+.venv/bin/python eval/adaptation.py --full   # the authoritative R1 numbers, full split
 ```
 
 ---
@@ -112,8 +135,8 @@ uv run python eval/adaptation.py --full   # the authoritative R1 numbers, full s
 and you cannot get it by cloning. It is the domain-adapted CLIP vision tower (LoRA, trained on
 BigEarthNet S1+S2 pairs on a Colab T4) that earns rubric row 4.
 
-<!-- MAYA: host benclip_state.pt (Drive / HF / release asset) and paste the link here.
-     Until this line is filled in, the handover is incomplete for anyone but you. -->
+<!-- REPO OWNER: host benclip_state.pt (Drive / HF / release asset) and paste the link here.
+     Until this line is filled in, the handover is incomplete for anyone but the owner. -->
 
 **Download link: _____________________ (not yet published)**
 
@@ -136,8 +159,8 @@ All gitignored (17 GB). Only what a given task needs — Tier 0 and Tier 1 need 
 
 | Dataset | Size | How to get it |
 |---|---|---|
-| BigEarthNet S1+S2 slice | 7.4 GB | `uv run python scripts/data/fetch_bigearthnet.py` — reproduces the identical 13,630 patches |
-| RSVQA-LR test | 243 MB | `uv run python scripts/data/fetch_rsvqa.py` |
+| BigEarthNet S1+S2 slice | 7.4 GB | `.venv/bin/python scripts/data/fetch_bigearthnet.py` — reproduces the identical 13,630 patches |
+| RSVQA-LR test | 243 MB | `.venv/bin/python scripts/data/fetch_rsvqa.py` |
 | VRSBench val | 4.0 GB | HF `xiang709/VRSBench` — `Images_val` + `Annotations_val`. Use `hf_hub_download` (chunked), **not** plain `curl`: single-stream was throttled to 5.3 Mbps vs 120 Mbps measured on the same line |
 | SECOND | 4.9 GB | `captain-whu.github.io/SCD` (Google Drive). Keep the **train** split — CDVQA is built on it |
 | CDVQA | 53 MB | `git clone https://github.com/YZHJessica/CDVQA` — annotations only; images come from SECOND train |
@@ -146,7 +169,7 @@ All gitignored (17 GB). Only what a given task needs — Tier 0 and Tier 1 need 
 There is no fetch script for VRSBench, SECOND or CDVQA — those three were pulled by hand.
 Provenance and schema notes are in `docs/status/W1-recon-*.md`.
 
-After fetching: `uv run python scripts/data/verify.py` checks sha256 against
+After fetching: `.venv/bin/python scripts/data/verify.py` checks sha256 against
 `data/manifests/`.
 
 ---
@@ -223,7 +246,7 @@ Non-negotiables from PLAN.md §5, all of which cost us real damage when broken:
 
 - **Never `git add -A` or `git add .`** (§5.7). Stage owned paths by name. A broad add once
   swept another agent's in-progress files into an unrelated commit.
-- **`PLAN.md` is read-only** except to Maya (§5.1). Agents write `docs/status/W<N>.md`.
+- **`PLAN.md` is read-only** except to the repo owner (§5.1). Agents write `docs/status/W<N>.md`.
 - **Never write a number you did not measure** (§5.9). Label it `PLACEHOLDER` and name the
   blocker instead. Every rubric row in `docs/RESULTS.md` follows this.
 - **Specialists never import each other** (§5.3). Shared logic goes in `satquery/adapters/`
