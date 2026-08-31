@@ -1,5 +1,54 @@
 # Bhoonidhi — registration & data pull (W1, do this on day 1)
 
+> ## ⚠️ CORRECTED 2026-08-31 — the Cartosat-2S + RISAT plan below is NOT achievable
+>
+> Verified against the live portal with an approved account:
+>
+> - **Cartosat-2S is PRICED, not open data.** Under the Indian Space Policy 2023
+>   implementation, Bhoonidhi's free tier is **Resourcesat data at 5 m and
+>   coarser**. Cartosat-2S is sub-metre, so there is no free path to it.
+> - **RISAT-1 under Open Data yields no orderable products** — the only
+>   resolution offered is LOW, spectrum microwave, and the product list comes
+>   back empty. RISAT-1A is not offered among those options.
+>
+> **This is a policy boundary, not a UI problem. Do not keep retrying it.**
+>
+> ### Substitute targets (free, real ISRO sensors)
+>
+> | Product | Bands | Purpose |
+> |---|---|---|
+> | **Resourcesat LISS-III** (23.5 m) | **4** | Real ISRO 4-band MSI — exercises the same code path Cartosat MX would |
+> | Resourcesat AWiFS (56 m) | 4 | Second 4-band sample, different sensor |
+> | Cartosat-1 ortho / DEM | 1 | Real ISRO single-band product for the PAN path |
+>
+> Also try **Bhuvan NOEDA** (`bhuvan-app3.nrsc.gov.in/data/download`), a separate
+> free NRSC portal carrying AWiFS/LISS-III/ortho.
+>
+> **SAR:** if RISAT returns nothing, stop. We already hold 13,630 real Sentinel-1
+> scenes (BigEarthNet) which fully exercise the SAR ingestion and dB-scaling
+> path. Check whether NISAR is listed for your account, but treat it as optional.
+>
+> ### ⚠️ A band-order finding that matters more than the download
+>
+> PLAN.md §4.5 and `io/raster.py` both assume 4-band = **B02/B03/B04/B08**
+> (blue, green, red, NIR). **LISS-III is green, red, NIR, SWIR — it carries NO
+> BLUE BAND.** So a real ISRO 4-band product may not match our assumed order at
+> all, and the failure mode is a silently degraded embedding rather than a loud
+> error. Downloading one LISS-III scene tests this concretely, and it is now the
+> single highest-value reason to order anything.
+>
+> ### Consequence for W5's acceptance criterion
+>
+> PLAN.md §7 W5 requires `run_fusion` on "a real Bhoonidhi Cartosat + RISAT
+> pair". That is **not achievable on the free tier** and must be recorded as a
+> permanent constraint with a documented substitution (BigEarthNet S2+S1 pairs,
+> plus LISS-III for the 4-band path) — not left as a pending item that quietly
+> never closes.
+>
+> Sections 1 and 4–5 below remain valid. Section 2's Cartosat-2S/RISAT ordering
+> targets are superseded by the substitute table above; section 5's verification
+> step is unchanged and is still the actual deliverable.
+
 **Why this is on the critical path:** the hidden grading set is real Cartosat-2S optical +
 RISAT SAR. Everything we train on is Sentinel. Bhoonidhi is the only free source of actual
 ISRO-sensor data, so it is the only way to find out about the Sentinel→Cartosat/RISAT
