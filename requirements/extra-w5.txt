@@ -1,0 +1,11 @@
+# W5 — Cross-Modal Optical-SAR Analysis
+#
+# PLAN.md §5.6: declare extra deps here, NOT in pyproject.toml.
+#
+# All runtime dependencies (torch, numpy, rasterio, scipy) are already in
+# pyproject.toml (W0-owned). benclip is imported via satquery.adapters.benclip
+# and is small enough to stay resident (§4.3 exemption).
+#
+# matplotlib: agreement map rendering (saved to runs/ for W7 app).
+# Lazily imported; if absent the agreement map is skipped, not errored.
+matplotlib>=3.8

@@ -57,18 +57,11 @@ def test_run_change_stub_is_contract_valid():
     assert validate_change_result(run_change("t0.tif", "t1.tif", "what changed?")) is not None
 
 
-def test_run_fusion_stub_is_contract_valid():
-    assert validate_fusion_result(run_fusion("opt.tif", "sar.tif", "find water")) is not None
 
-
-@pytest.mark.parametrize(
-    "fn,args",
-    [(run_change, ("a.tif", "b.tif", "q")), (run_fusion, ("o.tif", "s.tif", "q"))],
-)
-def test_unimplemented_specialists_declare_themselves_as_stubs(fn, args):
+def test_run_change_stub_declares_itself_as_stub():
     """PLAN.md §5.9: a placeholder must announce itself rather than pass as a
-    real measurement. Delete a case here only when that specialist becomes real."""
-    assert fn(*args)["confidence_basis"] == "stub"
+    real measurement. Delete this when W4 lands run_change."""
+    assert run_change("a.tif", "b.tif", "q")["confidence_basis"] == "stub"
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +97,27 @@ def test_run_vqa_passes_evidence_through():
     result = run_vqa(_real_image, "q", evidence={"labels": ["water"]})
     validate_vqa_result(result)
     assert result["evidence"].get("labels") == ["water"]
+
+
+# Real implementation (W5): run_fusion is now live, not a stub.
+# Needs BEN S1+S2 data (gated behind _real_image presence).
+
+
+def test_run_fusion_is_contract_valid():
+    """W5: run_fusion now returns a real result. Moved from the stub section
+    per W5 brief line 81 — the stub assertion no longer applies."""
+    if _real_image is None:
+        pytest.skip("no BEN data on disk")
+    # Use any available S1+S2 pair — the contract validator does not care
+    # about the specific content, only the shape.
+    import glob as _glob
+    s1_files = _glob.glob("data/bigearthnet/images/BigEarthNet-S1/**/*_VV.tif",
+                          recursive=True)
+    if not s1_files:
+        pytest.skip("no S1 data on disk")
+    result = run_fusion(_real_image, s1_files[0], "what land cover?")
+    assert validate_fusion_result(result) is not None
+    assert result["confidence_basis"] != "stub"
 
 
 # ---------------------------------------------------------------------------
