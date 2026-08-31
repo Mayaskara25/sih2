@@ -1,0 +1,11 @@
+{
+  "retrieval_r1": 0.0017678255745433118,
+  "retrieval_r5": 0.010017678255745434,
+  "map": 0.43134030966869147,
+  "macro_f1": 0.3054207108397957,
+  "n_train": 6180,
+  "n_test": 3394,
+  "encoder": "benclip (14-channel adapted)",
+  "input_bands": "12 S2 + 2 S1 (14 channels)",
+  "seconds": 515.3
+}

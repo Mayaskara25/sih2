@@ -1,0 +1,14 @@
+{
+  "retrieval_r1": 0.0017678255745433118,
+  "retrieval_r5": 0.010017678255745434,
+  "map": 0.4313431885353368,
+  "macro_f1": 0.3054207108397957,
+  "n_train": 6180,
+  "n_test": 3394,
+  "encoder": "benclip (14-channel adapted)",
+  "input_bands": "12 S2 + 2 S1 (14 channels)",
+  "seconds": 466.0,
+  "run": "Colab T4, batch 192, lr 5e-4, 8 epochs, 240 steps, 5684 captioned train patches",
+  "loss_first_logged": 5.1259,
+  "loss_final": 4.4932
+}
