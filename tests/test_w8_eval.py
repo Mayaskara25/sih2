@@ -73,11 +73,40 @@ class TestStubDetection:
         assert verdict["status"] == "contract_violation"
 
     def test_probe_stub_inspects_actual_specialist(self):
-        # The probe must observe the REAL run_change at runtime — it should
-        # report it as a stub today (W4 has not landed), without hardcoding.
+        """The probe must observe the REAL run_change at runtime, never hardcode.
+
+        This test previously asserted `stub is True` with the comment "W4 has
+        not landed". W4 HAS now landed, so that assertion encoded a moment in
+        time rather than a property. The durable assertion -- true before W4,
+        true after, and true again if W4 is ever reverted -- is that the probe
+        AGREES with what the specialist actually reports. That is exactly the
+        mechanical-detection guarantee the harness exists to provide.
+        """
+        import os as _os
+
+        from satquery.specialists import change as change_mod
+
+        from eval import _common as _cc  # noqa: F401  (REPO_ROOT already imported as _c)
+
+        try:
+            actual_basis = change_mod.run_change(
+                _os.path.join(_c.REPO_ROOT, "__w8_probe_t0.tif"),
+                _os.path.join(_c.REPO_ROOT, "__w8_probe_t1.tif"),
+                "__w8_probe__ what changed between these two images?",
+            )["confidence_basis"]
+        except Exception:
+            actual_basis = None
+
         status = cdvqa._probe_stub()
-        assert status["stub"] is True
-        assert status["basis"] == "stub"
+
+        if actual_basis is not None:
+            assert status["basis"] == actual_basis, (
+                "probe disagrees with the specialist it claims to inspect — "
+                "detection is not actually mechanical"
+            )
+        assert status["stub"] is (actual_basis == "stub")
+        # W4 has landed, so a regression back to a stub basis is a real defect.
+        assert status["stub"] is False
 
 
 # --------------------------------------------------------------------------

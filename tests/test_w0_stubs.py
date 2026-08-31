@@ -12,12 +12,13 @@ The durable property is **contract conformance**, which holds for a stub and a
 real implementation alike. That is what this file tests now.
 
 Two consequences worth keeping in mind:
-  - Still-stubbed specialists (`run_change`, `run_fusion`) are tested with fake
-    paths, because a stub never opens the file. Real specialists must be given
-    a REAL image, and are gated behind CUDA + data being present so a clone
-    without a GPU (or without the ~5 GB of weights) still gets a green suite.
-  - When W4/W5 land, move `run_change`/`run_fusion` from the stub section to
-    the real section rather than deleting their assertions.
+  - A still-stubbed specialist is tested with fake paths, because a stub
+    never opens the file. Real specialists must be given a REAL image, and
+    are gated behind CUDA + data being present so a clone without a GPU (or
+    without the ~5 GB of weights) still gets a green suite.
+  - When a specialist lands, move it from the stub section to the real
+    section rather than deleting its assertions — `run_fusion` (W5) and
+    `run_change` (W4) have both made this move already.
 """
 
 import glob
@@ -42,26 +43,41 @@ CUDA_AVAILABLE = torch.cuda.is_available()
 _RSVQA = sorted(glob.glob("data/rsvqa_lr/Images_LR/*.tif"))
 _real_image = _RSVQA[0] if _RSVQA else None
 
+@pytest.fixture(autouse=True)
+def _free_vram_between_model_tests():
+    """Release benclip's module-level singleton between tests.
+
+    The local card is **3.64 GiB usable** (not the 6 GB the old readme
+    claimed). `run_change` and `run_fusion` legitimately hold benclip
+    resident -- PLAN.md §4.3 exempts it from the single-resident rule on the
+    grounds that it is "small enough to stay loaded alongside a heavy model".
+    At 0.60 GiB against 3.64 GiB total that assumption is marginal, and with
+    the VQA/grounding models also loading in this file it tips into
+    torch.OutOfMemoryError.
+
+    This is test isolation, not a product fix: each test here loads a
+    different heavy model serially, which is harsher than any real session.
+    The underlying headroom finding is recorded in docs/status/W4.md.
+    """
+    yield
+    try:
+        import gc
+        import torch as _t
+
+        from satquery.adapters import benclip as _bc
+
+        _bc.reset_default()
+        gc.collect()
+        if _t.cuda.is_available():
+            _t.cuda.empty_cache()
+    except Exception:
+        pass
+
+
 requires_model = pytest.mark.skipif(
     not CUDA_AVAILABLE or _real_image is None,
     reason="requires a CUDA device and RSVQA-LR data on disk",
 )
-
-
-# ---------------------------------------------------------------------------
-# Still stubbed (W4/W5 not landed): fake paths are fine, a stub never opens one.
-# ---------------------------------------------------------------------------
-
-
-def test_run_change_stub_is_contract_valid():
-    assert validate_change_result(run_change("t0.tif", "t1.tif", "what changed?")) is not None
-
-
-
-def test_run_change_stub_declares_itself_as_stub():
-    """PLAN.md §5.9: a placeholder must announce itself rather than pass as a
-    real measurement. Delete this when W4 lands run_change."""
-    assert run_change("a.tif", "b.tif", "q")["confidence_basis"] == "stub"
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +133,20 @@ def test_run_fusion_is_contract_valid():
         pytest.skip("no S1 data on disk")
     result = run_fusion(_real_image, s1_files[0], "what land cover?")
     assert validate_fusion_result(result) is not None
+    assert result["confidence_basis"] != "stub"
+
+
+# ---------------------------------------------------------------------------
+# Real implementation (W4): run_change is now live, not a stub. Moved from
+# the stub section above per the W4 brief (mirrors W5's run_fusion move) —
+# the "declares itself as stub" assertion no longer applies.
+# ---------------------------------------------------------------------------
+
+
+@requires_model
+def test_run_change_is_contract_valid():
+    result = run_change(_real_image, _real_image, "what changed between these two dates?")
+    assert validate_change_result(result) is not None
     assert result["confidence_basis"] != "stub"
 
 

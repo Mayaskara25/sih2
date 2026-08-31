@@ -11,6 +11,7 @@ are now gated behind CUDA; routing itself stays model-free in test_w6_router.py.
 """
 
 import json
+import os
 
 import numpy as np
 import pytest
@@ -21,6 +22,31 @@ from satquery.contracts import validate_execution_trace
 from satquery.controller.trace import TASK_ROLES, _merge_models, run_query, write_trace
 from satquery.runtime.modelpool import ModelPool, RoleSpec
 import torch  # noqa: E402
+
+_CUDA = torch.cuda.is_available()
+requires_model = pytest.mark.skipif(
+    not _CUDA, reason="requires a CUDA device (dispatches a real specialist)"
+)
+
+
+@pytest.fixture(autouse=True)
+def _free_vram_between_model_tests():
+    """Release benclip's singleton between tests -- the card is 3.64 GiB usable
+    and run_change legitimately keeps benclip resident (PLAN.md §4.3), which
+    starves the VQA/grounding loads later in this file."""
+    yield
+    try:
+        import gc
+
+        from satquery.adapters import benclip as _bc
+
+        _bc.reset_default()
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+
 from satquery.contracts import CONFIDENCE_BASES  # noqa: E402
 
 # Gate anything that dispatches a real specialist. Before this, `pytest tests/`
@@ -195,21 +221,34 @@ def test_merge_models_pool_actual_overrides_plan():
 # --------------------------------------------------------------------------- #
 
 
+@requires_model
 def test_change_result_artifacts_mapped(two_imgs, tmp_path):
+    # W4 landed: run_change now WRITES a change mask, so the old
+    # `artifacts["mask"] is None` assertion became structurally false for any
+    # correct implementation (PLAN.md W4 DONE MEANS requires a written mask).
+    # The durable property is that the trace maps the artifact through and the
+    # path names a real file -- which is also a stronger assertion than before.
     trace = run_query("what changed?", list(two_imgs), runs_root=str(tmp_path / "runs"))
-    assert trace["artifacts"]["mask"] is None
+    mask = trace["artifacts"]["mask"]
+    assert mask is not None, "W4 writes a change mask; the trace must surface it"
+    assert os.path.exists(mask), f"trace mask path does not exist on disk: {mask}"
     assert set(trace["artifacts"].keys()) >= {"mask", "overlay", "report"}
     assert trace["timings_ms"]["total"] >= 0
 
 
 def test_write_trace_writes_to_runs_root(tmp_path, two_imgs):
-    # Uses a CHANGE query deliberately: this test is about where write_trace puts
-    # the file, not about inference, and run_change is still a stub -- so it stays
-    # model-free. The original "describe the scene" routed to caption, which after
-    # W3 loads Qwen2-VL and hung the CPU-only suite (PLAN.md §5.2 corollary 2).
+    # This test is about WHERE write_trace puts the file, not about inference, so
+    # it must not dispatch a model (PLAN.md §5.2 corollary 2 -- the CPU-only suite).
+    # It used to rely on run_change being a stub; W4 landed and that is no longer
+    # true, so it now uses a VALIDATION REFUSAL instead: a change query with only
+    # one image is refused before dispatch, which still writes a full trace and
+    # loads nothing. This stays model-free permanently rather than until the next
+    # specialist lands.
     trace = run_query(
-        "what changed between these two dates?", list(two_imgs), runs_root=str(tmp_path / "runs")
+        "what changed between these two dates?", [list(two_imgs)[0]],
+        runs_root=str(tmp_path / "runs"),
     )
+    assert trace["validation"]["passed"] is False  # refused, so nothing was loaded
     path = write_trace(trace, runs_root=str(tmp_path / "replayed"))
     assert path == str(tmp_path / "replayed" / trace["run_id"] / "trace.json")
     assert json.load(open(path)) == trace
