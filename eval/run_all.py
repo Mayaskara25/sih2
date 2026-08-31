@@ -197,9 +197,39 @@ def render_results(collected: Dict[str, dict], cross: dict) -> str:
     rows.append("")
 
     c = collected["cdvqa"]
-    rows.append("| 3 | Multi-image change (CDVQA) | change accuracy / mask precision | "
-                f"{_c.PLACEHOLDER} | {c.get('n')} | {c.get('date')} |")
-    rows.append("    (blocker) " + c.get("blocker", ""))
+    # Row 3 splits into two INDEPENDENT metrics with different blockers: change-VQA
+    # accuracy needs CDVQA's question set, mask precision needs only SECOND's
+    # reference labels. Status is read from the harness, never hardcoded.
+    if c.get("status") == _c.PLACEHOLDER:
+        rows.append("| 3 | Multi-image change (CDVQA) | change-VQA accuracy | "
+                    f"{_c.PLACEHOLDER} | {c.get('n')} | {c.get('date')} |")
+        rows.append("    (blocker) " + c.get("blocker", ""))
+    else:
+        rows.append("| 3 | Multi-image change (CDVQA) | change-VQA accuracy | "
+                    f"{c['accuracy']:.4f} | {c.get('n')} | {c.get('date')} |")
+
+    m = c.get("mask") or {}
+    if m.get("status") == "measured":
+        rows.append("| 3b | Multi-image change (SECOND) | change-mask precision | "
+                    f"{m['precision']:.4f} | {m['n']} | {c.get('date')} |")
+        rows.append("| 3c | Multi-image change (SECOND) | change-mask recall | "
+                    f"{m['recall']:.4f} | {m['n']} | {c.get('date')} |")
+        rows.append("| 3d | Multi-image change (SECOND) | change-mask IoU | "
+                    f"{m['iou']:.4f} | {m['n']} | {c.get('date')} |")
+        rows.append(
+            f"    (note) Baseline: a degenerate \"everything changed\" predictor scores "
+            f"precision {m['baseline_precision']:.4f} (the ground-truth change rate), so "
+            f"{m['precision']:.4f} is {m['precision']/m['baseline_precision']:.2f}x trivial "
+            "-- real signal, but weak. The detector over-flags: predicted change rate "
+            f"{m['pred_change_rate']:.3f} vs ground truth {m['gt_change_rate']:.3f}. "
+            "Reference change is defined as label_t0 != label_t1 over SECOND's per-date "
+            "semantic labels. Classical differencing (PLAN.md §8 fallback, no trained "
+            "change head) is expected to over-segment; the number is reported as measured, "
+            "not tuned.")
+    elif m:
+        rows.append("| 3b | Multi-image change (SECOND) | change-mask precision | "
+                    f"{_c.PLACEHOLDER} | {m.get('n', 0)} | {c.get('date')} |")
+        rows.append("    (blocker) " + m.get("blocker", ""))
     rows.append("")
 
     a = collected["adaptation"]
