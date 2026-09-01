@@ -1,0 +1,114 @@
+{
+  "pass": 18,
+  "fail": 0,
+  "report": [
+    {
+      "test": "run_vqa returns text_response (str)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "run_vqa returns confidence in [0,1]",
+      "status": "PASS",
+      "detail": "conf=0.6838"
+    },
+    {
+      "test": "VQA confidence is dynamic (not degenerate 1.0)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "large image triggers slicing",
+      "status": "PASS",
+      "detail": "1600x1200 > 1024"
+    },
+    {
+      "test": "run_grounding returns text_response (str)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "run_grounding returns bounding_boxes (list)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "run_grounding returns confidence in [0,1]",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "bounding boxes carry oriented_box_2d",
+      "status": "PASS",
+      "detail": "16/16 boxes refined"
+    },
+    {
+      "test": "oriented_box_2d contains angle_deg",
+      "status": "PASS",
+      "detail": "theta=-90.0"
+    },
+    {
+      "test": "oriented_box_2d contains box_2d (contract preserved)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "polygon is list of [x,y] pairs",
+      "status": "PASS",
+      "detail": "4 vertices"
+    },
+    {
+      "test": "run_vqa contract keys present",
+      "status": "PASS",
+      "detail": "keys=['confidence', 'text_response']"
+    },
+    {
+      "test": "run_grounding contract keys present",
+      "status": "PASS",
+      "detail": "keys=['bounding_boxes', 'confidence', 'text_response']"
+    },
+    {
+      "test": "box sub-contract keys present",
+      "status": "PASS",
+      "detail": "keys=['box_2d', 'confidence', 'label', 'oriented_box_2d', 'polygon']"
+    },
+    {
+      "test": "box_2d has exactly 4 coords [ymin,xmin,ymax,xmax]",
+      "status": "PASS",
+      "detail": "box_2d=[0.0, 0.0, 511.5, 511.8]"
+    },
+    {
+      "test": "active VRAM under 3.0 GB budget",
+      "status": "PASS",
+      "detail": "allocated=2279.2 MB (reserved=3990.9 MB)"
+    },
+    {
+      "test": "metadata reports MobileSAM",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "metadata reports SAHI slicing",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "metadata": {
+    "vqa_model": "Qwen/Qwen2-VL-2B-Instruct",
+    "grounding_model": "IDEA-Research/grounding-dino-tiny",
+    "segmentation": "MobileSAM",
+    "slicing": "SAHI-enabled",
+    "quantization": "4bit-nf4",
+    "device": "cuda",
+    "innovations": [
+      "I07_spectral_gating",
+      "I08_obb_polygon",
+      "I09_sar_backscatter",
+      "I10_radiometric_stretch",
+      "TSC_dynamic_token_softmax",
+      "COMPONENT_A_mobilesam_segmentation",
+      "COMPONENT_B_sahi_slicing"
+    ]
+  },
+  "vram_reserved_mb": 3990.9
+}

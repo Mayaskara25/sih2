@@ -1,0 +1,25 @@
+# Python virtual environment (5.3 GB -- never commit)
+.venv/
+venv/
+env/
+
+# Python cache / bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Model weights (large binaries)
+weights/
+
+# Large generated demo / test imagery
+large_test.png
+demo_rgb.png
+gonahal_test.png
+SATQUERY_LIVE_INNOVATIONS_DEMO.png
+
+# Test / runtime reports
+*.log
+.DS_Store
+.idea/
+.vscode/

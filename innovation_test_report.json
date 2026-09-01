@@ -1,0 +1,16 @@
+{
+  "ok": [
+    "Frozen contract functions exported",
+    "Innovations declared in execution metadata",
+    "I09 SAR backscatter (water/urban masks) + Lee filter",
+    "I07 NDWI/NDVI gating rejects contextually-impossible boxes",
+    "I08 OBB rotation detected + polygon extracted",
+    "I10 radiometric stretch + CLAHE produce valid u8 RGB",
+    "I07 multiband GeoTIFF yields NDVI+NDWI spectral priors"
+  ],
+  "fail": [],
+  "skip": [
+    "real_model_inference"
+  ],
+  "latency_ms": {}
+}
